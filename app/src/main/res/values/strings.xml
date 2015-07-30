@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Popular Movies - tallLeRoy</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="pref_summary_sort_order">Select the order in which you prefer to have the movies sorted.</string>
+    <string name="pref_header_sort_order">Sort Order</string>
+    <string name="pref_header_general">General</string>
+    <string name="pref_moviedb_api_key">theMovieDB API Key</string>
+    <string name="pref_summary_moviedb_api_key">Get an API key from themoviedb.org and enter it here, this is required for all access to that database.</string>
+</resources>
