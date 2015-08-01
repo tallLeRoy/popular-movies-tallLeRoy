@@ -7,4 +7,11 @@
     <string name="pref_header_general">General</string>
     <string name="pref_moviedb_api_key">theMovieDB API Key</string>
     <string name="pref_summary_moviedb_api_key">Get an API key from themoviedb.org and enter it here, this is required for all access to that database.</string>
+    <string name="pref_sort_order_list">sort_order_list</string>
+    <string name="pref_api_key_text">api_key_text</string>
+
+
+    <!-- SyncAdapter related -->
+    <string name="sync_account_type">popularmovies_tallleroy.example.com</string>
+    <string name="content_authority">com.example.leroy.popularmovies_tallleroy</string>
 </resources>

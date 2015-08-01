@@ -1,10 +1,14 @@
 package com.example.leroy.popularmovies_tallleroy;
 
+import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.example.leroy.popularmovies_tallleroy.sync.SyncWorker;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -12,6 +16,8 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        BackgroundTask bt = new BackgroundTask();
+        bt.execute(this);
         setContentView(R.layout.activity_main);
     }
 
@@ -35,5 +41,15 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+
+    private class BackgroundTask extends AsyncTask {
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            SyncWorker.performSync(null,null,null,null,null, (Context)params[0] );
+            return null;
+        }
     }
 }

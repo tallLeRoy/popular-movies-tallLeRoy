@@ -1,7 +1,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
    <ListPreference
-        android:key="sort_order_list"
+        android:key="@string/pref_sort_order_list"
         android:title="@string/pref_header_sort_order"
         android:summary="@string/pref_summary_sort_order"
         android:entries="@array/pref_entries_sort_order"
@@ -11,7 +11,7 @@
      <!-- NOTE: EditTextPreference accepts EditText attributes. -->
     <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
     <EditTextPreference
-        android:key="api_key_text"
+        android:key="@string/pref_api_key_text"
         android:title="@string/pref_moviedb_api_key"
         android:summary="@string/pref_summary_moviedb_api_key"
         android:singleLine="true"
