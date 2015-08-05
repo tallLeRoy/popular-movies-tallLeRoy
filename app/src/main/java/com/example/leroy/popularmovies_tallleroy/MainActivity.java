@@ -1,23 +1,23 @@
 package com.example.leroy.popularmovies_tallleroy;
 
-import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.example.leroy.popularmovies_tallleroy.sync.SyncWorker;
+import com.example.leroy.popularmovies_tallleroy.sync.SyncAdapter;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements PostersFragment.Callback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        BackgroundTask bt = new BackgroundTask();
-        bt.execute(this);
+        // start up the sync activity to retrieve our posters from themoviedb
+        SyncAdapter.initializeSyncAdapter(this);
+        SyncAdapter.syncImmediately(this);
         setContentView(R.layout.activity_main);
     }
 
@@ -43,13 +43,9 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onItemSelected(Uri dateUri) {
 
-    private class BackgroundTask extends AsyncTask {
-
-        @Override
-        protected Object doInBackground(Object[] params) {
-            SyncWorker.performSync(null,null,null,null,null, (Context)params[0] );
-            return null;
-        }
     }
+
 }

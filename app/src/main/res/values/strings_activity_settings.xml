@@ -5,8 +5,8 @@
 
     <string name="pref_entry_sort_order_popularity">Most Popular</string>
     <string name="pref_entry_sort_order_rating">Highest Rating</string>
-    <string name="pref_value_sort_order_popularity" translatable="false">0</string>
-    <string name="pref_value_sort_order_rating" translatable="false">1</string>
+    <string name="pref_value_sort_order_popularity" translatable="false">1</string>
+    <string name="pref_value_sort_order_rating" translatable="false">2</string>
 
     <string name="pref_title_social_recommendations">Enable social recommendations</string>
     <string name="pref_description_social_recommendations">Recommendations for people to contact
