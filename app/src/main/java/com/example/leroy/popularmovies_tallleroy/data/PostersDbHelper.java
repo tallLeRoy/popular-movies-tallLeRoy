@@ -27,7 +27,7 @@ import com.example.leroy.popularmovies_tallleroy.data.PostersContract.PostersEnt
 public class PostersDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 7;
 
     static final String DATABASE_NAME = "posters.db";
 
@@ -41,8 +41,8 @@ public class PostersDbHelper extends SQLiteOpenHelper {
         // location setting, the city name, and the latitude and longitude
         final String SQL_CREATE_POSTERS_TABLE = "CREATE TABLE " + PostersContract.PostersEntry.TABLE_NAME + " (" +
                 PostersEntry._ID + " INTEGER PRIMARY KEY," +
-                PostersEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL, " +
-                PostersEntry.COLUMN_ADULT + " INTEGER, " +
+                PostersEntry.COLUMN_MOVIE_ID + " TEXT UNIQUE NOT NULL, " +
+                PostersEntry.COLUMN_ADULT + " TEXT, " +
                 PostersEntry.COLUMN_BACKDROP_PATH + " TEXT, " +
                 PostersEntry.COLUMN_GENRE_IDS + " TEXT, " +
                 PostersEntry.COLUMN_ORIGINAL_LANGUAGE + " TEXT, " +
@@ -55,7 +55,8 @@ public class PostersDbHelper extends SQLiteOpenHelper {
                 PostersEntry.COLUMN_VIDEO + " TEXT, " +
                 PostersEntry.COLUMN_VOTE_AVERAGE + " REAL, " +
                 PostersEntry.COLUMN_VOTE_COUNT + " INTEGER, " +
-                PostersEntry.COLUMN_SORT_ORDER + " INTEGER, " +
+                PostersEntry.COLUMN_BACKDROP_BITMAPBYTES + " BLOB DEFAULT NULL, " +
+                PostersEntry.COLUMN_POSTER_BITMAPBYTES + " BLOB DEFAULT NULL, " +
                 PostersEntry.COLUMN_INSERT_DATE + " DATE DEFAULT CURRENT_DATE " +
                 " );";
 

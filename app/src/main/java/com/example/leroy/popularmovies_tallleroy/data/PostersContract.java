@@ -81,7 +81,8 @@ public class PostersContract {
         public static final String COLUMN_VIDEO = "video";
         public static final String COLUMN_VOTE_AVERAGE = "vote_average";
         public static final String COLUMN_VOTE_COUNT = "vote_count";
-        public static final String COLUMN_SORT_ORDER = "sort_order";
+        public static final String COLUMN_BACKDROP_BITMAPBYTES = "backdrop_bitmapBytes";
+        public static final String COLUMN_POSTER_BITMAPBYTES = "poster_bitmapBytes";
         public static final String COLUMN_INSERT_DATE = "insert_date";
 
         public static Uri buildPosterUri(long id) {
@@ -91,6 +92,14 @@ public class PostersContract {
         public static String getMovieIdFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
         }
+
+        public static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.TABLE_NAME + "." + PostersContract.PostersEntry.COLUMN_MOVIE_ID + " = ? ";
+        public static final String CURRENT_POSTERS = PostersContract.PostersEntry.TABLE_NAME + "." +
+                PostersContract.PostersEntry.COLUMN_INSERT_DATE + " = CURRENT_DATE ";
+        public static final String POSTERS_QUERY_SORT_ORDER_POPULARITY = PostersContract.PostersEntry.TABLE_NAME + "." +
+                PostersContract.PostersEntry.COLUMN_POPULARITY + " DESC ";
+        public static final String POSTERS_QUERY_SORT_ORDER_RATING = PostersContract.PostersEntry.TABLE_NAME + "." +
+                PostersContract.PostersEntry.COLUMN_VOTE_AVERAGE + " DESC ";
 
     }
 

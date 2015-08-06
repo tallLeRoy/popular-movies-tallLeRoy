@@ -23,8 +23,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
-import com.example.leroy.popularmovies_tallleroy.sync.SyncWorker;
-
 public class PostersProvider extends ContentProvider {
 
     // The URI Matcher used by this content provider.
@@ -85,7 +83,7 @@ public class PostersProvider extends ContentProvider {
                 retCursor = mOpenHelper.getReadableDatabase().query(
                         PostersContract.PostersEntry.TABLE_NAME,
                         projection,
-                        SyncWorker.POSTER_BY_MOVIE_ID_SELECTION,
+                        PostersContract.PostersEntry.POSTER_BY_MOVIE_ID_SELECTION,
                         new String[] { PostersContract.PostersEntry.getMovieIdFromUri(uri) },
                         null,
                         null,

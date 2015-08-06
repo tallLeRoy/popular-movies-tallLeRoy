@@ -6,6 +6,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SyncResult;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,10 +21,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Vector;
 
@@ -35,29 +40,29 @@ public class SyncWorker {
     static final String API_KEY = "api_key";
     static final String SORT_BY = "sort_by";
     static final String POPULARITY = "popularity.desc";
-    static final String RATING = "vote_average.desc";
-    public static final int SORT_ORDER_POPULARITY = 1;
-    public static final int SORT_ORDER_RATING = 2;
+//    static final String RATING = "vote_average.desc";
+//    public static final String SORT_ORDER_POPULARITY = "1";
+//    public static final String SORT_ORDER_RATING = "2";
 
-    public static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.TABLE_NAME + "." + PostersContract.PostersEntry.COLUMN_MOVIE_ID + " = ? ";
-    public static final String POSTERS_BY_SORT_ORDER_VALUE = PostersContract.PostersEntry.TABLE_NAME + "." + PostersContract.PostersEntry.COLUMN_SORT_ORDER + " = ? ";
-    // give us the set of posters that were inserted before today and have the same sort_order
-    public static final String CURRENT_POSTERS_BY_SORT_ORDER_VALUE = POSTERS_BY_SORT_ORDER_VALUE +
-            " AND " +  PostersContract.PostersEntry.TABLE_NAME + "." + PostersContract.PostersEntry.COLUMN_INSERT_DATE + " = CURRENT_DATE ";
-    public static final String POSTERS_QUERY_SORT_ORDER = PostersContract.PostersEntry.TABLE_NAME + "." + "_ID ASC "; 
+//    public static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.TABLE_NAME + "." + PostersContract.PostersEntry.COLUMN_MOVIE_ID + " = ? ";
+//    public static final String CURRENT_POSTERS = PostersContract.PostersEntry.TABLE_NAME + "." +
+//            PostersContract.PostersEntry.COLUMN_INSERT_DATE + " = CURRENT_DATE ";
 
+    static final String CURRENT_POSTERS = PostersContract.PostersEntry.CURRENT_POSTERS;
+    static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.POSTER_BY_MOVIE_ID_SELECTION;
 
     // return true if the database was not refreshed today, themoviedb is updated daily
-    public static boolean isSyncRequired(Context context, int sortValueId) {
-        boolean bSyncRequired = false;
+    public static boolean isSyncRequired(Context context) {
+            boolean bSyncRequired = false;
 
         // are there records in the contentprovider for today with this sort order?
-        Cursor cursor = context.getContentResolver().query(PostersContract.PostersEntry.CONTENT_URI,
-                null, CURRENT_POSTERS_BY_SORT_ORDER_VALUE, new String[]{Integer.toString(sortValueId)}, POSTERS_QUERY_SORT_ORDER);
+        Cursor cursor = context.getContentResolver().query(PostersContract.PostersEntry.CONTENT_URI, null, CURRENT_POSTERS, null, null);
 
         if (cursor.getCount() == 0) {
             bSyncRequired = true;
         }
+
+        cursor.close();
 
         return bSyncRequired;
     }
@@ -74,13 +79,13 @@ public class SyncWorker {
 //        cleanDatabase(context);
 
         String sortValue = POPULARITY;
-        int sortValueId = SORT_ORDER_POPULARITY;
-        if (Utility.getPreferredSortOrder(context).equals(Integer.toString(SORT_ORDER_RATING))) {
-            sortValue = RATING;
-            sortValueId = SORT_ORDER_RATING;
-        }
+//        String sortValueId = SORT_ORDER_POPULARITY;
+//        if (Utility.getPreferredSortOrder(context).equals("@string/pref_value_sort_order_rating")) {
+//            sortValue = RATING;
+//            sortValueId = SORT_ORDER_RATING;
+//        }
 
-        if (!isSyncRequired(context, sortValueId)) {
+        if (!isSyncRequired(context)) {
             Log.d(LOG_TAG, "Sync not needed, we have the current " + sortValue + " data");
             return;
         }
@@ -138,7 +143,7 @@ public class SyncWorker {
             }
 //            Log.d(LOG_TAG, buffer.toString());
 
-            processJSON(buffer.toString(), context, sortValueId);
+            processJSON(buffer.toString(), context);
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
         } finally {
@@ -157,15 +162,22 @@ public class SyncWorker {
         return;
     }
 
-    private static void processJSON(String strWhole, Context context, int sortValueId) {
+    private static void processJSON(String strWhole, Context context) {
         try {
             JSONObject jsonWhole = new JSONObject(strWhole);
             JSONArray results = jsonWhole.getJSONArray("results");
             Vector<ContentValues> cVVector = new Vector<ContentValues>(results.length());
 
             for(int i=0; i < results.length(); i++) {
-                MovieSummary ms = new MovieSummary(results.getJSONObject(i), sortValueId);
+                MovieSummary ms = new MovieSummary(results.getJSONObject(i));
                 if (ms.isValid()) {
+                    // cache the bitmaps for this movie
+                    byte[] bm = getCompressedBitmapBytes(ms.getPosterUrl());
+                    if (bm == null) {
+                        Log.i(LOG_TAG, "failed to load poster bitmap " + ms.getPosterUrlString());
+                    } else {
+                        ms.setPoster_bitmapBytes(bm);
+                    }
                     cVVector.add(ms.asContentValues());
                 }
             }
@@ -177,7 +189,7 @@ public class SyncWorker {
 
                 // delete the current set of posters for this mSortOrder
                 context.getContentResolver().delete(PostersContract.PostersEntry.CONTENT_URI,
-                        POSTERS_BY_SORT_ORDER_VALUE, new String[]{Integer.toString(sortValueId)} );
+                        null, null );
                 // insert the new posters table
                 context.getContentResolver().bulkInsert(PostersContract.PostersEntry.CONTENT_URI, cvArray);
             }
@@ -187,4 +199,44 @@ public class SyncWorker {
         }
     }
 
+    private static Bitmap getBitmap(URL url) {
+        HttpURLConnection urlConnection = null;
+        Bitmap bitmap = null;
+        try {
+            // Create the request to themoviedb, and open the connection
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+
+            // Read the input stream into a String
+            InputStream inputStream = urlConnection.getInputStream();
+
+            bitmap = BitmapFactory.decodeStream(inputStream);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+        }
+
+        return bitmap;
+    }
+
+    private static byte[] getCompressedBitmapBytes(URL url) {
+        byte[] compressed = null;
+
+        Bitmap bm = getBitmap(url);
+        if (bm != null) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            if (bm.compress(Bitmap.CompressFormat.PNG,0,stream)){
+                compressed = stream.toByteArray();
+            }
+        }
+        return compressed;
+    }
 }

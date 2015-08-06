@@ -1,89 +1,87 @@
 package com.example.leroy.popularmovies_tallleroy;
 
+import android.app.Activity;
 import android.content.ContentValues;
-import android.net.Uri;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.DisplayMetrics;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.sql.Date;
-import java.util.Arrays;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * Created by LeRoy on 8/1/2015.
  */
 public class MovieSummary implements Parcelable {
-    public static int INVALID_ID = -1;
-    public static String IMAGE_URL = "https://image.tmdb.org/t/p/w185";
+    public static String INVALID_ID = "-1";
+    public static String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/";
 
-    boolean adult;
+    public static void setActivity(Activity activity) {
+        // run this once at the first time the class it used
+        // determine the screen size and update the IMAGE_BASE_URL
+        // to keep the onscreen size right
+        DisplayMetrics dm = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+
+        int density = dm.densityDpi;
+        if (density <= DisplayMetrics.DENSITY_LOW) {
+            IMAGE_BASE_URL += "w92";
+        } else if (density <= DisplayMetrics.DENSITY_MEDIUM) {
+            IMAGE_BASE_URL += "w154";
+        } else if (density <= DisplayMetrics.DENSITY_HIGH) {
+            IMAGE_BASE_URL += "w185";
+        } else if (density <= DisplayMetrics.DENSITY_XHIGH) {
+            IMAGE_BASE_URL += "w342";
+        } else if (density <= DisplayMetrics.DENSITY_XXHIGH) {
+            IMAGE_BASE_URL += "w500";
+        } else {
+            // higher density devices than XXHIGH(480)
+            IMAGE_BASE_URL += "w780";
+        }
+    }
+
+    String adult;
     String backdrop_path;
-    int [] genre_ids;
-    int movie_id = INVALID_ID;
+    String genre_ids;
+    String movie_id = INVALID_ID;
     String original_language;
     String original_title;
     String overview;
-    Date release_date;
+    String release_date;
     String poster_path;
-    double popularity;
+    String popularity;
     String title;
-    boolean video;
-    double vote_average;
-    int vote_count;
-    int sort_order;
+    String video;
+    String vote_average;
+    String vote_count;
+    byte[] backdrop_bitmapBytes = null;
+    byte[] poster_bitmapBytes = null;
 
     private static Class<MovieSummary> myClass = MovieSummary.class;
 
     // make sure all of the field names are in these 'namesXXX' arrays by type
-    private static String [] namesBoolean = {"adult", "video"};
-    private static String [] namesString = {"backdrop_path", "original_language", "original_title", "overview", "poster_path", "title"};
-    private static String [] namesInt = {"movie_id", "vote_count", "sort_order"};
-    private static String [] namesIntArray = {"genre_ids"};
-    private static String [] namesDate = {"release_date"};
-    private static String [] namesDouble = {"popularity", "vote_average"};
+    private static String [] namesBitmapBytes = {"backdrop_bitmapBytes", "poster_bitmapBytes"};
+    private static String [] namesString = {"adult", "backdrop_path", "genre_ids", "original_language", "original_title",
+            "overview", "release_date", "poster_path", "popularity", "title", "video", "vote_average", "vote_count", "movie_id"};
 
-    public MovieSummary(JSONObject movie, int sort_order) {
+    public MovieSummary(JSONObject movie) {
 
         try {
-            for (String nameString : namesBoolean) {
-               myClass.getDeclaredField(nameString).set(this, movie.getBoolean(nameString));
-            }
-            for (String nameString : namesDate) {
-               myClass.getDeclaredField(nameString).set(this, Date.valueOf(movie.getString(nameString)));
-            }
-            for (String nameString : namesDouble) {
-               myClass.getDeclaredField(nameString).set(this, movie.getDouble(nameString));
-            }
-            for (String nameString : namesInt) {
-                if (nameString.equals("movie_id")) {
-                    // hold off on setting movie_id until the end... sets object as valid
-                } else if (nameString.equals("sort_order")) {
-                    // special case, sort_order is not included in the JSON
-                    myClass.getDeclaredField(nameString).set(this, sort_order);
-                } else {
-                    myClass.getDeclaredField(nameString).set(this, movie.getInt(nameString));
-                }
-            }
-            for (String nameString : namesIntArray) {
-                JSONArray jsonArray = movie.getJSONArray(nameString);
-                int size = jsonArray.length();
-                int [] intArray = new int[size];
-                for (int i = 0; i < size; i++) {
-                   intArray[i] = jsonArray.getInt(i);
-                }
-               myClass.getDeclaredField(nameString).set(this, intArray);
-            }
             for(String nameString : namesString) {
-               myClass.getDeclaredField(nameString).set(this, movie.getString(nameString));
+                if (nameString.equals("movie_id")) {
+                    // special case
+                    // the JSON from themoviedb uses plain old id for our movie_id
+                    myClass.getDeclaredField(nameString).set(this, movie.getString("id"));
+                } else {
+                    myClass.getDeclaredField(nameString).set(this, movie.getString(nameString));
+                }
             }
-
-            // finally set the movie_id from id in the JSON to mark the object as valid
-            // note the name change to movie_id, it will be movie_id from here on out
-            myClass.getDeclaredField("movie_id").set(this, movie.getInt("id"));
-
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (JSONException e){
@@ -96,24 +94,6 @@ public class MovieSummary implements Parcelable {
     protected MovieSummary(Parcel in) {
 
         try {
-            for (String nameString : namesBoolean) {
-               myClass.getDeclaredField(nameString).set(this, in.readInt() != 0);
-            }
-            for (String nameString : namesDate) {
-               myClass.getDeclaredField(nameString).set(this, Date.valueOf(in.readString()));
-            }
-            for (String nameString : namesDouble) {
-               myClass.getDeclaredField(nameString).set(this, in.readDouble());
-            }
-            for (String nameString : namesInt) {
-               myClass.getDeclaredField(nameString).set(this, in.readInt());
-            }
-            for (String nameString : namesIntArray) {
-                int size = in.readInt();
-                int [] array = new int[size];
-                in.readIntArray(array);
-               myClass.getDeclaredField(nameString).set(this, array);
-            }
             for(String nameString : namesString) {
                myClass.getDeclaredField(nameString).set(this, in.readString());
             }
@@ -128,35 +108,9 @@ public class MovieSummary implements Parcelable {
 
     public MovieSummary(ContentValues v) {
         try {
-            for (String nameString : namesBoolean) {
-                if ( v.containsKey(nameString) ) {
-                   myClass.getDeclaredField(nameString).set(this, v.getAsInteger(nameString) != 0);
-                }
-            }
-            for (String nameString : namesDate) {
-                if ( v.containsKey(nameString) ) {
-                   myClass.getDeclaredField(nameString).set(this, Date.valueOf(v.getAsString(nameString)));
-                }
-            }
-            for (String nameString : namesDouble) {
-                if ( v.containsKey(nameString) ) {
-                   myClass.getDeclaredField(nameString).set(this, v.getAsDouble(nameString));
-                }
-            }
-            for (String nameString : namesInt) {
-                if ( v.containsKey(nameString) ) {
-                   myClass.getDeclaredField(nameString).set(this, v.getAsInteger(nameString));
-                }
-            }
-            for (String nameString : namesIntArray) {
-                if ( v.containsKey(nameString) ) {
-                    String[] strInt = v.getAsString(nameString).replace("[", "").replace("]","").split(", ");
-                    int size = strInt.length;
-                    int [] array = new int[size];
-                    for (int i = 0; i < size; i++) {
-                        array[i] = Integer.parseInt(strInt[i]);
-                    }
-                   myClass.getDeclaredField(nameString).set(this, array);
+            for(String nameString : namesBitmapBytes) {
+                if(v.containsKey(nameString)) {
+                    myClass.getDeclaredField(nameString).set(this, v.getAsByteArray(nameString));
                 }
             }
             for(String nameString : namesString) {
@@ -165,6 +119,28 @@ public class MovieSummary implements Parcelable {
                 }
             }
         } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public MovieSummary(Cursor cursor) {
+        try {
+            for(String nameString : namesBitmapBytes) {
+                int index = cursor.getColumnIndex(nameString);
+                if (index >= 0) {
+                    myClass.getDeclaredField(nameString).set(this, cursor.getBlob(index));
+                }
+            }
+
+            for(String nameString : namesString) {
+                int index = cursor.getColumnIndex(nameString);
+                if (index >= 0) {
+                    myClass.getDeclaredField(nameString).set(this, cursor.getString(index));
+                }
+            }
+       } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
@@ -190,27 +166,11 @@ public class MovieSummary implements Parcelable {
 
     public void writeToParcel(Parcel dest, int flags) {
         try {
-            for (String nameString : namesBoolean) {
-                dest.writeInt(MovieSummary.class.getDeclaredField(nameString).getBoolean(this) ? 1 : 0);
-            }
-            for (String nameString : namesDate) {
-                String dateString =myClass.getDeclaredField(nameString).get(this).toString();
-                dest.writeString(dateString);
-            }
-            for (String nameString : namesDouble) {
-                dest.writeDouble(MovieSummary.class.getDeclaredField(nameString).getDouble(this));
-            }
-            for (String nameString : namesInt) {
-                dest.writeInt(MovieSummary.class.getDeclaredField(nameString).getInt(this));
-            }
-            for (String nameString : namesIntArray) {
-                int [] array = (int [])MovieSummary.class.getDeclaredField(nameString).get(this);
-                int size = array.length;
-                dest.writeInt(size);
-                dest.writeIntArray(array);
+            for(String nameString : namesBitmapBytes) {
+                dest.writeByteArray((byte[]) MovieSummary.class.getDeclaredField(nameString).get(this));
             }
             for(String nameString : namesString) {
-                dest.writeString((String)MovieSummary.class.getDeclaredField(nameString).get(this));
+                dest.writeString((String) MovieSummary.class.getDeclaredField(nameString).get(this));
             }
         } catch (IllegalAccessException e) {
             e.printStackTrace();
@@ -224,25 +184,11 @@ public class MovieSummary implements Parcelable {
     public ContentValues asContentValues() {
         ContentValues v = new ContentValues();
         try {
-            for (String nameString : namesBoolean) {
-                v.put(nameString,myClass.getDeclaredField(nameString).getBoolean(this) ? 1 : 0);
-            }
-            for (String nameString : namesDate) {
-                String dateString =myClass.getDeclaredField(nameString).get(this).toString();
-                v.put(nameString, dateString);
-            }
-            for (String nameString : namesDouble) {
-                v.put(nameString,myClass.getDeclaredField(nameString).getDouble(this));
-            }
-            for (String nameString : namesInt) {
-               v.put(nameString,myClass.getDeclaredField(nameString).getInt(this));
-            }
-            for (String nameString : namesIntArray) {
-                int[] array = (int[])myClass.getDeclaredField(nameString).get(this);
-                v.put(nameString, Arrays.toString(array));
+            for (String nameString : namesBitmapBytes) {
+                v.put(nameString, (byte[]) myClass.getDeclaredField(nameString).get(this));
             }
             for (String nameString : namesString) {
-                v.put(nameString, (String)myClass.getDeclaredField(nameString).get(this));
+                v.put(nameString, (String) myClass.getDeclaredField(nameString).get(this));
             }
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
@@ -252,9 +198,9 @@ public class MovieSummary implements Parcelable {
         return v;
     }
 
-    public boolean isValid() { return movie_id != INVALID_ID; }
+    public boolean isValid() { return !movie_id.equals(INVALID_ID); }
 
-    public boolean isAdult() {
+    public String getAdult() {
         return adult;
     }
 
@@ -262,19 +208,36 @@ public class MovieSummary implements Parcelable {
         return backdrop_path;
     }
 
-    public Uri getBackdropUri() {
-        Uri uri = null;
-        if (isValid() && getBackdrop_path() != null) {
-            uri = Uri.parse(IMAGE_URL + getBackdrop_path());
-        }
-        return uri;
+    public String getBackdropUrlString() {
+        return IMAGE_BASE_URL + getBackdrop_path();
     }
 
-    public int[] getGenre_ids() {
+    public URL getBackdropUrl() {
+        URL url = null;
+        if (isValid() && getBackdrop_path() != null) {
+            try {
+                url = new URL(getBackdropUrlString());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        }
+        return url;
+    }
+
+    public Bitmap getBackdropBitmap() {
+        Bitmap bitmap = null;
+        // we stored a compressed bitmap, rehydrate it
+        if (backdrop_bitmapBytes != null) {
+            bitmap = BitmapFactory.decodeByteArray(backdrop_bitmapBytes,0,backdrop_bitmapBytes.length);
+        }
+        return bitmap;
+    }
+    
+    public String getGenre_ids() {
         return genre_ids;
     }
 
-    public int getMovieId() {
+    public String getMovieId() {
         return movie_id;
     }
 
@@ -290,7 +253,7 @@ public class MovieSummary implements Parcelable {
         return overview;
     }
 
-    public double getPopularity() {
+    public String getPopularity() {
         return popularity;
     }
 
@@ -298,15 +261,32 @@ public class MovieSummary implements Parcelable {
         return poster_path;
     }
 
-    public Uri getPosterUri() {
-        Uri uri = null;
-        if (isValid() && getPoster_path() != null) {
-            uri = Uri.parse(IMAGE_URL + getPoster_path());
-        }
-        return uri;
+    public String getPosterUrlString() {
+        return IMAGE_BASE_URL + getPoster_path();
     }
 
-    public Date getRelease_date() {
+    public URL getPosterUrl() {
+        URL url = null;
+        if (isValid() && getPoster_path() != null) {
+            try {
+                url = new URL(getPosterUrlString());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        }
+        return url;
+    }
+
+    public Bitmap getPosterBitmap() {
+        Bitmap bitmap = null;
+        // we stored a compressed bitmap, rehydrate it
+        if (poster_bitmapBytes != null) {
+            bitmap = BitmapFactory.decodeByteArray(poster_bitmapBytes,0,poster_bitmapBytes.length);
+        }
+        return bitmap;
+    }
+
+    public String getRelease_date() {
         return release_date;
     }
 
@@ -314,16 +294,32 @@ public class MovieSummary implements Parcelable {
         return title;
     }
 
-    public boolean isVideo() {
+    public String getVideo() {
         return video;
     }
 
-    public double getVote_average() {
+    public String getVote_average() {
         return vote_average;
     }
 
-    public int getVote_count() {
+    public String getVote_count() {
         return vote_count;
+    }
+
+    public byte[] getPoster_bitmapBytes() {
+        return poster_bitmapBytes;
+    }
+
+    public void setPoster_bitmapBytes(byte[] poster_bitmapBytes) {
+        this.poster_bitmapBytes = poster_bitmapBytes;
+    }
+
+    public byte[] getbackdrop_bitmapBytes() {
+        return backdrop_bitmapBytes;
+    }
+
+    public void setbackdrop_bitmapBytes(byte[] backdrop_bitmapBytes) {
+        this.backdrop_bitmapBytes = backdrop_bitmapBytes;
     }
 
 }

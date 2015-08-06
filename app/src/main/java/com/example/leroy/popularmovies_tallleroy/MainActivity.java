@@ -15,6 +15,7 @@ public class MainActivity extends ActionBarActivity implements PostersFragment.C
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MovieSummary.setActivity(this);
         // start up the sync activity to retrieve our posters from themoviedb
         SyncAdapter.initializeSyncAdapter(this);
         SyncAdapter.syncImmediately(this);
