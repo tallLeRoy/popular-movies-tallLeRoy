@@ -1,21 +1,29 @@
 package com.example.leroy.popularmovies_tallleroy;
 
-import android.app.LoaderManager;
-import android.content.Loader;
-import android.database.Cursor;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridView;
 
+import com.example.leroy.popularmovies_tallleroy.sync.SyncAdapter;
+import com.example.leroy.popularmovies_tallleroy.sync.SyncWorker;
+
+import java.util.ArrayList;
+
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class PostersFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class PostersFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    PostersAdapter mPostersAdapter;
 
     public PostersFragment() {
     }
@@ -26,27 +34,47 @@ public class PostersFragment extends Fragment implements LoaderManager.LoaderCal
         setHasOptionsMenu(true);
         View mainView =  inflater.inflate(R.layout.fragment_posters, container, false);
 
-        PostersAdapter postersAdapter = new PostersAdapter(getActivity(), PostersAdapter.getCurrentMovieList(getActivity()));
+        mPostersAdapter = new PostersAdapter(getActivity(),  new ArrayList<MovieSummary>(20));
 
         GridView gridView = (GridView) mainView.findViewById(R.id.gridview);
-        gridView.setAdapter(postersAdapter);
+        gridView.setAdapter(mPostersAdapter);
 
         return mainView;
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return null;
+    public void onResume() {
+        super.onResume();
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
+    public void onPause() {
+        super.onPause();
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Context context = getActivity();
+        Resources res = context.getResources();
+        String prefSortOrder = res.getString(R.string.pref_sort_order_list);
+        String prefAPIKey = res.getString(R.string.pref_api_key_text);
+        String prefNewData = res.getString(R.string.pref_new_data_loaded);
 
+        if (key.equals(prefSortOrder)) {
+            mPostersAdapter.updateMovieList();
+        }
+        if (key.equals(prefNewData)) {
+            // remove the new data flag
+            sharedPreferences.edit().remove(prefNewData);
+            // update the view
+            mPostersAdapter.updateMovieList();
+        }
+        if (key.equals(prefAPIKey)) {
+            SyncWorker.cleanDatabase(context);
+            SyncAdapter.syncImmediately(context);
+        }
     }
 
     public interface Callback {

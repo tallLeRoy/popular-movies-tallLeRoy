@@ -4,15 +4,18 @@ import android.accounts.Account;
 import android.content.ContentProviderClient;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.example.leroy.popularmovies_tallleroy.MovieSummary;
+import com.example.leroy.popularmovies_tallleroy.R;
 import com.example.leroy.popularmovies_tallleroy.Utility;
 import com.example.leroy.popularmovies_tallleroy.data.PostersContract;
 
@@ -40,13 +43,6 @@ public class SyncWorker {
     static final String API_KEY = "api_key";
     static final String SORT_BY = "sort_by";
     static final String POPULARITY = "popularity.desc";
-//    static final String RATING = "vote_average.desc";
-//    public static final String SORT_ORDER_POPULARITY = "1";
-//    public static final String SORT_ORDER_RATING = "2";
-
-//    public static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.TABLE_NAME + "." + PostersContract.PostersEntry.COLUMN_MOVIE_ID + " = ? ";
-//    public static final String CURRENT_POSTERS = PostersContract.PostersEntry.TABLE_NAME + "." +
-//            PostersContract.PostersEntry.COLUMN_INSERT_DATE + " = CURRENT_DATE ";
 
     static final String CURRENT_POSTERS = PostersContract.PostersEntry.CURRENT_POSTERS;
     static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.POSTER_BY_MOVIE_ID_SELECTION;
@@ -73,7 +69,7 @@ public class SyncWorker {
     }
 
     public static void performSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult, Context context) {
-        Log.d(LOG_TAG, "Starting sync");
+        Log.i(LOG_TAG, "Starting sync");
 
 //        // for debug, load the data anytime
 //        cleanDatabase(context);
@@ -86,7 +82,7 @@ public class SyncWorker {
 //        }
 
         if (!isSyncRequired(context)) {
-            Log.d(LOG_TAG, "Sync not needed, we have the current " + sortValue + " data");
+            Log.i(LOG_TAG, "Sync not needed, we have the current " + sortValue + " data");
             return;
         }
 
@@ -97,7 +93,7 @@ public class SyncWorker {
 
         String apiKey = Utility.getPreferredApiKey(context);
         if (( apiKey == null ) || apiKey.equals("")) {
-            Log.d(LOG_TAG, "Sync error, apiKey is null or empty");
+            Log.i(LOG_TAG, "Sync error, apiKey is null or empty");
             return;
         }
 
@@ -158,7 +154,14 @@ public class SyncWorker {
                 }
             }
         }
-        Log.d(LOG_TAG,"Ending Sync");
+
+        // tell the sharedpred listeners about the new data
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        String newDataLoaded = context.getResources().getString(R.string.pref_new_data_loaded);
+        editor.putString(newDataLoaded, "true");
+
+        Log.i(LOG_TAG, "Ending Sync");
         return;
     }
 
