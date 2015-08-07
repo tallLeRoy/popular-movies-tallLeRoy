@@ -81,8 +81,8 @@ public class PostersContract {
         public static final String COLUMN_VIDEO = "video";
         public static final String COLUMN_VOTE_AVERAGE = "vote_average";
         public static final String COLUMN_VOTE_COUNT = "vote_count";
-        public static final String COLUMN_BACKDROP_BITMAPBYTES = "backdrop_bitmapBytes";
-        public static final String COLUMN_POSTER_BITMAPBYTES = "poster_bitmapBytes";
+        public static final String COLUMN_BACKDROP_BITMAP = "backdrop_bitmap";
+        public static final String COLUMN_POSTER_BITMAP = "poster_bitmap";
         public static final String COLUMN_INSERT_DATE = "insert_date";
 
         public static Uri buildPosterUri(long id) {

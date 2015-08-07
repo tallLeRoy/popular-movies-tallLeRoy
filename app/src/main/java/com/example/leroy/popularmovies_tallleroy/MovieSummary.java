@@ -14,6 +14,7 @@ import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 
 /**
  * Created by LeRoy on 8/1/2015.
@@ -26,23 +27,25 @@ public class MovieSummary implements Parcelable {
         // run this once at the first time the class it used
         // determine the screen size and update the IMAGE_BASE_URL
         // to keep the onscreen size right
-        DisplayMetrics dm = new DisplayMetrics();
-        activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        if( IMAGE_BASE_URL.endsWith("/")) {
+            DisplayMetrics dm = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
 
-        int density = dm.densityDpi;
-        if (density <= DisplayMetrics.DENSITY_LOW) {
-            IMAGE_BASE_URL += "w92";
-        } else if (density <= DisplayMetrics.DENSITY_MEDIUM) {
-            IMAGE_BASE_URL += "w154";
-        } else if (density <= DisplayMetrics.DENSITY_HIGH) {
-            IMAGE_BASE_URL += "w185";
-        } else if (density <= DisplayMetrics.DENSITY_XHIGH) {
-            IMAGE_BASE_URL += "w342";
-        } else if (density <= DisplayMetrics.DENSITY_XXHIGH) {
-            IMAGE_BASE_URL += "w500";
-        } else {
-            // higher density devices than XXHIGH(480)
-            IMAGE_BASE_URL += "w780";
+            int density = dm.densityDpi;
+            if (density <= DisplayMetrics.DENSITY_LOW) {
+                IMAGE_BASE_URL += "w92";
+            } else if (density <= DisplayMetrics.DENSITY_MEDIUM) {
+                IMAGE_BASE_URL += "w154";
+            } else if (density <= DisplayMetrics.DENSITY_HIGH) {
+                IMAGE_BASE_URL += "w185";
+            } else if (density <= DisplayMetrics.DENSITY_XHIGH) {
+                IMAGE_BASE_URL += "w342";
+            } else if (density <= DisplayMetrics.DENSITY_XXHIGH) {
+                IMAGE_BASE_URL += "w500";
+            } else {
+                // higher density devices than XXHIGH(480)
+                IMAGE_BASE_URL += "w780";
+            }
         }
     }
 
@@ -60,19 +63,20 @@ public class MovieSummary implements Parcelable {
     String video;
     String vote_average;
     String vote_count;
-    byte[] backdrop_bitmapBytes = null;
-    byte[] poster_bitmapBytes = null;
+    Bitmap backdrop_bitmap = null;
+    Bitmap poster_bitmap = null;
 
     private static Class<MovieSummary> myClass = MovieSummary.class;
 
     // make sure all of the field names are in these 'namesXXX' arrays by type
-    private static String [] namesBitmapBytes = {"backdrop_bitmapBytes", "poster_bitmapBytes"};
+    private static String [] namesBitmap = {"backdrop_bitmap", "poster_bitmap"};
     private static String [] namesString = {"adult", "backdrop_path", "genre_ids", "original_language", "original_title",
             "overview", "release_date", "poster_path", "popularity", "title", "video", "vote_average", "vote_count", "movie_id"};
 
     public MovieSummary(JSONObject movie) {
 
         try {
+            // there are no bitmaps in the JSON from themoviedb
             for(String nameString : namesString) {
                 if (nameString.equals("movie_id")) {
                     // special case
@@ -94,6 +98,9 @@ public class MovieSummary implements Parcelable {
     protected MovieSummary(Parcel in) {
 
         try {
+//            for(String nameString : namesBitmap) {
+//                myClass.getDeclaredField(nameString).set(this, byteArrayToBitmap(in.createByteArray()));
+//            }
             for(String nameString : namesString) {
                myClass.getDeclaredField(nameString).set(this, in.readString());
             }
@@ -108,11 +115,11 @@ public class MovieSummary implements Parcelable {
 
     public MovieSummary(ContentValues v) {
         try {
-            for(String nameString : namesBitmapBytes) {
-                if(v.containsKey(nameString)) {
-                    myClass.getDeclaredField(nameString).set(this, v.getAsByteArray(nameString));
-                }
-            }
+//            for(String nameString : namesBitmap) {
+//                if(v.containsKey(nameString)) {
+//                    myClass.getDeclaredField(nameString).set(this, byteArrayToBitmap(v.getAsByteArray(nameString)));
+//                }
+//            }
             for(String nameString : namesString) {
                 if ( v.containsKey(nameString) ) {
                    myClass.getDeclaredField(nameString).set(this, v.getAsString(nameString));
@@ -127,13 +134,13 @@ public class MovieSummary implements Parcelable {
 
     public MovieSummary(Cursor cursor) {
         try {
-            for(String nameString : namesBitmapBytes) {
-                int index = cursor.getColumnIndex(nameString);
-                if (index >= 0) {
-                    myClass.getDeclaredField(nameString).set(this, cursor.getBlob(index));
-                }
-            }
-
+//            for(String nameString : namesBitmap) {
+//                int index = cursor.getColumnIndex(nameString);
+//                if (index >= 0) {
+//                    myClass.getDeclaredField(nameString).set(this, byteArrayToBitmap(cursor.getBlob(index)));
+//                }
+//            }
+//
             for(String nameString : namesString) {
                 int index = cursor.getColumnIndex(nameString);
                 if (index >= 0) {
@@ -164,11 +171,24 @@ public class MovieSummary implements Parcelable {
         return 0;
     }
 
+    private byte[] bitmapToByteArray(Bitmap bitmap) {
+        if (bitmap == null) { return null; }
+        int size = bitmap.getByteCount();
+        ByteBuffer buffer = ByteBuffer.allocate(size);
+        bitmap.copyPixelsToBuffer(buffer);
+        return buffer.array();
+    }
+
+    private Bitmap byteArrayToBitmap(byte[] bytes) {
+        if (bytes == null) { return null; }
+        return BitmapFactory.decodeByteArray(bytes,0,0);
+    }
+
     public void writeToParcel(Parcel dest, int flags) {
         try {
-            for(String nameString : namesBitmapBytes) {
-                dest.writeByteArray((byte[]) MovieSummary.class.getDeclaredField(nameString).get(this));
-            }
+//            for(String nameString : namesBitmap) {
+//                dest.writeByteArray(bitmapToByteArray((Bitmap)MovieSummary.class.getDeclaredField(nameString).get(this)));
+//            }
             for(String nameString : namesString) {
                 dest.writeString((String) MovieSummary.class.getDeclaredField(nameString).get(this));
             }
@@ -184,9 +204,9 @@ public class MovieSummary implements Parcelable {
     public ContentValues asContentValues() {
         ContentValues v = new ContentValues();
         try {
-            for (String nameString : namesBitmapBytes) {
-                v.put(nameString, (byte[]) myClass.getDeclaredField(nameString).get(this));
-            }
+//            for (String nameString : namesBitmap) {
+//                v.put(nameString, bitmapToByteArray((Bitmap)myClass.getDeclaredField(nameString).get(this)));
+//            }
             for (String nameString : namesString) {
                 v.put(nameString, (String) myClass.getDeclaredField(nameString).get(this));
             }
@@ -225,12 +245,7 @@ public class MovieSummary implements Parcelable {
     }
 
     public Bitmap getBackdropBitmap() {
-        Bitmap bitmap = null;
-        // we stored a compressed bitmap, rehydrate it
-        if (backdrop_bitmapBytes != null) {
-            bitmap = BitmapFactory.decodeByteArray(backdrop_bitmapBytes,0,backdrop_bitmapBytes.length);
-        }
-        return bitmap;
+        return backdrop_bitmap;
     }
     
     public String getGenre_ids() {
@@ -278,12 +293,7 @@ public class MovieSummary implements Parcelable {
     }
 
     public Bitmap getPosterBitmap() {
-        Bitmap bitmap = null;
-        // we stored a compressed bitmap, rehydrate it
-        if (poster_bitmapBytes != null) {
-            bitmap = BitmapFactory.decodeByteArray(poster_bitmapBytes,0,poster_bitmapBytes.length);
-        }
-        return bitmap;
+        return poster_bitmap;
     }
 
     public String getRelease_date() {
@@ -306,20 +316,12 @@ public class MovieSummary implements Parcelable {
         return vote_count;
     }
 
-    public byte[] getPoster_bitmapBytes() {
-        return poster_bitmapBytes;
+    public void setPoster_bitmap(Bitmap poster_bitmap) {
+        this.poster_bitmap = poster_bitmap;
     }
 
-    public void setPoster_bitmapBytes(byte[] poster_bitmapBytes) {
-        this.poster_bitmapBytes = poster_bitmapBytes;
-    }
-
-    public byte[] getbackdrop_bitmapBytes() {
-        return backdrop_bitmapBytes;
-    }
-
-    public void setbackdrop_bitmapBytes(byte[] backdrop_bitmapBytes) {
-        this.backdrop_bitmapBytes = backdrop_bitmapBytes;
+    public void setBackdrop_bitmap(Bitmap backdrop_bitmap) {
+        this.backdrop_bitmap = backdrop_bitmap;
     }
 
 }

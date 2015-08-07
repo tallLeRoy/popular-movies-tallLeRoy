@@ -66,10 +66,15 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
             mPostersAdapter.updateMovieList();
         }
         if (key.equals(prefNewData)) {
-            // remove the new data flag
-            sharedPreferences.edit().remove(prefNewData);
-            // update the view
-            mPostersAdapter.updateMovieList();
+            String value = sharedPreferences.getString(key, null);
+            if (value != null) {
+                // remove the new data flag
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.remove(prefNewData);
+                editor.commit();
+                // update the view
+                mPostersAdapter.updateMovieList();
+            }
         }
         if (key.equals(prefAPIKey)) {
             SyncWorker.cleanDatabase(context);

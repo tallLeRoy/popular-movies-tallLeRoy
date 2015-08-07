@@ -72,7 +72,7 @@ public class SyncWorker {
         Log.i(LOG_TAG, "Starting sync");
 
 //        // for debug, load the data anytime
-//        cleanDatabase(context);
+        cleanDatabase(context);
 
         String sortValue = POPULARITY;
 //        String sortValueId = SORT_ORDER_POPULARITY;
@@ -160,6 +160,7 @@ public class SyncWorker {
         SharedPreferences.Editor editor = prefs.edit();
         String newDataLoaded = context.getResources().getString(R.string.pref_new_data_loaded);
         editor.putString(newDataLoaded, "true");
+        editor.commit();
 
         Log.i(LOG_TAG, "Ending Sync");
         return;
@@ -175,12 +176,12 @@ public class SyncWorker {
                 MovieSummary ms = new MovieSummary(results.getJSONObject(i));
                 if (ms.isValid()) {
                     // cache the bitmaps for this movie
-                    byte[] bm = getCompressedBitmapBytes(ms.getPosterUrl());
-                    if (bm == null) {
-                        Log.i(LOG_TAG, "failed to load poster bitmap " + ms.getPosterUrlString());
-                    } else {
-                        ms.setPoster_bitmapBytes(bm);
-                    }
+//                    Bitmap bm = getBitmap(ms.getPosterUrl());
+//                    if (bm == null) {
+//                        Log.i(LOG_TAG, "failed to load poster bitmap " + ms.getPosterUrlString());
+//                    } else {
+//                        ms.setPoster_bitmap(bm);
+//                    }
                     cVVector.add(ms.asContentValues());
                 }
             }

@@ -17,7 +17,7 @@ import java.util.List;
  * Created by LeRoy on 8/5/2015.
  *
 */
-public class PostersAdapter extends ArrayAdapter<MovieSummary> {
+public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncSupplyBitmapResponse {
     private static final String LOG_TAG = PostersAdapter.class.getSimpleName();
 
     List<MovieSummary> movieList;
@@ -47,7 +47,7 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> {
 
 
     public void updateMovieList() {
-        ArrayList<MovieSummary> newList = new ArrayList<MovieSummary>(20);
+        List<MovieSummary> newList = new ArrayList<MovieSummary>(20);
 
         String sortRating = context.getResources().getString(R.string.pref_value_sort_order_rating);
         String sortOrder = PostersContract.PostersEntry.POSTERS_QUERY_SORT_ORDER_POPULARITY;
@@ -66,12 +66,15 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> {
         cursor.close();
 
         if (newList.size() > 0) {
-            if (!movieList.equals(newList)) {
-                clear();
-                addAll(newList);
-                notifyDataSetChanged();
-            }
+            SupplyBitmaps supplyBitmaps = new SupplyBitmaps(this);
+            supplyBitmaps.execute(newList);
         }
     }
 
+    @Override
+    public void bitmapsAvailable(List<MovieSummary> movieSummaries) {
+        clear();
+        addAll(movieSummaries);
+        notifyDataSetChanged();
+    }
 }
