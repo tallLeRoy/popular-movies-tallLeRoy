@@ -27,6 +27,8 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
     // need static here for the OnSharedPreferencesChanged callback
     static Activity activity;
     static Resources res;
+    static int gridPosition = GridView.INVALID_POSITION;
+    GridView gridView = null;
 
     public PostersFragment() {
     }
@@ -34,6 +36,7 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         if (savedInstanceState == null) {
             activity = getActivity();
             res = activity.getResources();
@@ -53,10 +56,17 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
         }
         mPostersAdapter = new PostersAdapter(getActivity(),  movieSummaries);
         mPostersAdapter.setCallback(getActivity());
+        mPostersAdapter.setMainView(mainView);
 
-        GridView gridView = (GridView) mainView.findViewById(R.id.gridview);
+        gridView = (GridView) mainView.findViewById(R.id.gridview);
 
         gridView.setAdapter(mPostersAdapter);
+        if (savedInstanceState != null && savedInstanceState.containsKey("grid_position")) {
+            gridPosition = savedInstanceState.getInt("grid_position");
+        }
+        if (gridPosition != GridView.INVALID_POSITION) {
+            gridView.setSelection(gridPosition);
+        }
 
         return mainView;
     }
@@ -98,5 +108,12 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
             SyncAdapter.syncImmediately(activity);
         }
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        gridPosition = gridView.getFirstVisiblePosition();
+        super.onSaveInstanceState(outState);
+    }
+
 
 }

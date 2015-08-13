@@ -28,6 +28,11 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
     PostersAdapter.Callback callback;
     String currentSortOrder;
     ImageView posterImageView;
+    View mainView;
+
+    public void setMainView(View mainView) {
+        this.mainView = mainView;
+    }
 
     public interface Callback {
         public void onItemSelected(MovieSummary movieSummary);
@@ -50,10 +55,10 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
         if (gridCell == null) {
             LayoutInflater inflater = (LayoutInflater.from(context));
             gridCell = inflater.inflate(R.layout.poster_cell, null);
-            posterImageView = (ImageView) gridCell.findViewById(R.id.posterimg);
-        }
+       }
         MovieSummary ms = movieList.get(position);
         // set the view with the poster and give the title to the content description
+        posterImageView = (ImageView) gridCell.findViewById(R.id.posterimg);
         posterImageView.setContentDescription(ms.getTitle());
         posterImageView.setImageBitmap(ms.getPosterBitmap());
         posterImageView.setTag(ms);
@@ -137,6 +142,10 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
         clear();
         addAll(movieSummaries);
         notifyDataSetChanged();
+        // hide themoviedb logo
+        if(mainView != null) {
+            mainView.findViewById(R.id.logo).setVisibility(View.INVISIBLE);
+        }
         // delete any unused bitmap files in the file system
         new Utility.CleanupFiledBitmaps(context).execute(movieSummaries);
     }

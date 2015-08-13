@@ -50,19 +50,23 @@ public class MovieSummary implements Parcelable {
             activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
 
             int density = dm.densityDpi;
-            if (density <= DisplayMetrics.DENSITY_LOW) {
-                IMAGE_BASE_URL += "w92";
-            } else if (density <= DisplayMetrics.DENSITY_MEDIUM) {
-                IMAGE_BASE_URL += "w154";
-            } else if (density <= DisplayMetrics.DENSITY_HIGH) {
-                IMAGE_BASE_URL += "w185";
-            } else if (density <= DisplayMetrics.DENSITY_XHIGH) {
-                IMAGE_BASE_URL += "w342";
-            } else if (density <= DisplayMetrics.DENSITY_XXHIGH) {
-                IMAGE_BASE_URL += "w500";
+            if (!MainActivity.RUN_IN_EMULATOR.equals("true")) {
+                if (density <= DisplayMetrics.DENSITY_LOW) {
+                    IMAGE_BASE_URL += "w92";
+                } else if (density <= DisplayMetrics.DENSITY_MEDIUM) {
+                    IMAGE_BASE_URL += "w154";
+                } else if (density <= DisplayMetrics.DENSITY_HIGH) {
+                    IMAGE_BASE_URL += "w185";
+                } else if (density <= DisplayMetrics.DENSITY_XHIGH) {
+                    IMAGE_BASE_URL += "w342";
+                } else if (density <= DisplayMetrics.DENSITY_XXHIGH) {
+                    IMAGE_BASE_URL += "w500";
+                } else {
+                    // higher density devices than XXHIGH(480)
+                    IMAGE_BASE_URL += "w780";
+                }
             } else {
-                // higher density devices than XXHIGH(480)
-                IMAGE_BASE_URL += "w780";
+                IMAGE_BASE_URL += "w185";
             }
         }
     }
@@ -85,16 +89,15 @@ public class MovieSummary implements Parcelable {
     String vote_count;
     boolean bLocalBackdropBitmap = false;
     boolean bLocalPosterBitmap = false;
-//    Bitmap backdrop_bitmap = null;
-//    Bitmap poster_bitmap = null;
 
     private static Class<MovieSummary> myClass = MovieSummary.class;
 
     // make sure all of the field names are in these 'namesXXX' arrays by type
-    private static String [] namesBitmap = {"backdrop_bitmap", "poster_bitmap"};
     private static String [] namesString = {"adult", "backdrop_path", "genre_ids", "original_language", "original_title",
             "overview", "release_date", "poster_path", "popularity", "title", "video", "vote_average", "vote_count", "movie_id"};
     private static String [] namesDetails = {"runtime"};
+    private static String [] namesBoolean = {"bLocalBackdropBitmap", "bLocalPosterBitmap"};
+    private static String [] namesList = {"trailers"};
 
     public MovieSummary(JSONObject movie) {
 
@@ -121,16 +124,18 @@ public class MovieSummary implements Parcelable {
     protected MovieSummary(Parcel in) {
 
         try {
-//            for(String nameString : namesBitmap) {
-//                myClass.getDeclaredField(nameString).set(this, byteArrayToBitmap(in.createByteArray()));
-//            }
             for(String nameString : namesString) {
                myClass.getDeclaredField(nameString).set(this, in.readString());
             }
             for(String nameString : namesDetails) {
                 myClass.getDeclaredField(nameString).set(this, in.readString());
             }
-            trailers = in.readArrayList(MovieSummary.Trailer.class.getClassLoader());
+            for(String nameString : namesBoolean) {
+                myClass.getDeclaredField(nameString).set(this, in.readInt() != 0);
+            }
+            for(String nameString : namesList) {
+                myClass.getDeclaredField(nameString).set(this, in.readArrayList(MovieSummary.Trailer.class.getClassLoader()));
+            }
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -228,16 +233,18 @@ public class MovieSummary implements Parcelable {
 
     public void writeToParcel(Parcel dest, int flags) {
         try {
-//            for(String nameString : namesBitmap) {
-//                dest.writeByteArray(bitmapToByteArray((Bitmap)MovieSummary.class.getDeclaredField(nameString).get(this)));
-//            }
             for(String nameString : namesString) {
                 dest.writeString((String) MovieSummary.class.getDeclaredField(nameString).get(this));
             }
             for(String nameString : namesDetails) {
                 dest.writeString((String) MovieSummary.class.getDeclaredField(nameString).get(this));
             }
-            dest.writeList(trailers);
+            for(String nameString : namesBoolean) {
+                dest.writeInt(((boolean)MovieSummary.class.getDeclaredField(nameString).get(this)) ? 1 : 0);
+            }
+            for(String nameString : namesList) {
+                dest.writeList((List)MovieSummary.class.getDeclaredField(nameString).get(this));
+            }
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (NoSuchFieldException e) {
@@ -429,7 +436,9 @@ public class MovieSummary implements Parcelable {
         }
 
         void grabMovieDetail() {
-
+            if (mMovieSummary.bLocalPosterBitmap) {
+                return;
+            }
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;

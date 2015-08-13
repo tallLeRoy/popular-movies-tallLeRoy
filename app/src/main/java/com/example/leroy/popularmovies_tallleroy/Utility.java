@@ -1,7 +1,10 @@
 package com.example.leroy.popularmovies_tallleroy;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -99,6 +102,39 @@ public class Utility {
 
             return null;
         }
+    }
+
+    public static class CleanupAllFiledBitmaps extends AsyncTask<List<MovieSummary>, Integer, Long> {
+        Context context;
+
+        public CleanupAllFiledBitmaps(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected Long doInBackground(List<MovieSummary>... params) {
+            // now delete any local poster file that has a filename that not in the keySet
+            File filesDir = new File(context.getFilesDir().toString());
+            if (filesDir != null) {
+                File[] files = filesDir.listFiles();
+                if (files != null) {
+                    for (File f : files) {
+                        String filename = f.getName();
+                        if(filename.startsWith(MEMORY_CACHE_FILENAME_PREFIX)) {
+                            f.delete();
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public static boolean isIntentAvailable(Context context, Intent intent) {
+        PackageManager mgr = context.getPackageManager();
+        List<ResolveInfo> list = mgr.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        return list.size() > 0;
     }
 
 }

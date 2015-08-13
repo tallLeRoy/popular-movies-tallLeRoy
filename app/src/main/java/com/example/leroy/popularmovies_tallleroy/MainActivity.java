@@ -15,21 +15,40 @@ import android.widget.EditText;
 
 import com.example.leroy.popularmovies_tallleroy.sync.SyncAdapter;
 
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity implements PostersAdapter.Callback {
+    public static final String RUN_IN_EMULATOR = "false";
+    public static final String CLEAN_LOCAL_FILES = "false";
+
+    static PostersFragment postersFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         MovieSummary.setActivity(this);
+        setContentView(R.layout.activity_main);
+
+        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
         // start up the sync activity to retrieve our posters from themoviedb
         if(savedInstanceState == null) {
             checkForAPI_key();
             SyncAdapter.initializeSyncAdapter(this);
-        } else {
-            SyncAdapter.syncImmediately(this);
+
+            if (CLEAN_LOCAL_FILES.equals("true")) {
+                // for debug, remove any old bitmaps in the file system
+                new Utility.CleanupAllFiledBitmaps(this).execute(new ArrayList<MovieSummary>());
+            }
+            if (postersFragment == null) {
+                postersFragment = (PostersFragment) fragmentManager.findFragmentById(R.id.PostersFragment);
+            } else {
+//                fragmentManager.beginTransaction()
+//                        .replace(R.id.PostersFragment, postersFragment)
+//                        .commit();
+            }
         }
-        setContentView(R.layout.activity_main);
+        SyncAdapter.syncImmediately(this);
     }
 
     private void checkForAPI_key() {
@@ -58,7 +77,8 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
                                 public void onClick(DialogInterface dialog,int id) {
                                     // get user input and set it to the API_key
                                     SharedPreferences.Editor editor = prefs.edit();
-                                    editor.putString(getString(R.string.pref_api_key_text), userInput.getText().toString());
+//                                    editor.putString(getString(R.string.pref_api_key_text), userInput.getText().toString());
+                                    editor.putString(getString(R.string.pref_api_key_text), "35225ca1eec3918e9f32c1c2c1e279a9");
                                     editor.commit();
                                 }
                             })

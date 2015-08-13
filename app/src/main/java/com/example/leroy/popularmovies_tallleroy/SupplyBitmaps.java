@@ -113,6 +113,8 @@ public class SupplyBitmaps extends AsyncTask<List<MovieSummary>, Integer, List<M
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -127,7 +129,7 @@ public class SupplyBitmaps extends AsyncTask<List<MovieSummary>, Integer, List<M
             return s_memoryCache;
         }
         if (s_memoryCache == null) {
-            int allocateSize = bitmap.getByteCount() * 22;
+            int allocateSize = bitmap.getByteCount() * 20;
             // this size will be about 80 meg for the largest posters
             s_memoryCache = new LruCache<String,Bitmap>(allocateSize) {
                 @Override
