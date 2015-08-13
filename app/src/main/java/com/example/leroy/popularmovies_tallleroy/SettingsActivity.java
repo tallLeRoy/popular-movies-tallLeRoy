@@ -3,7 +3,6 @@ package com.example.leroy.popularmovies_tallleroy;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,9 +11,6 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-
-import com.example.leroy.popularmovies_tallleroy.sync.SyncAdapter;
-import com.example.leroy.popularmovies_tallleroy.sync.SyncWorker;
 
 import java.util.List;
 
@@ -29,7 +25,7 @@ import java.util.List;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class SettingsActivity extends PreferenceActivity {
     /**
      * Determines whether to always show the simplified settings UI, where
      * settings are presented in a single list. When false, settings are shown
@@ -37,26 +33,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
      * shown on tablets.
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).registerOnSharedPreferenceChangeListener(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-//        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).unregisterOnSharedPreferenceChangeListener(this);
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals(getApplicationContext().getResources().getString(R.string.pref_api_key_text))) {
-            SyncWorker.cleanDatabase(getApplicationContext());
-        }
-        SyncAdapter.syncImmediately(this);
-    }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {

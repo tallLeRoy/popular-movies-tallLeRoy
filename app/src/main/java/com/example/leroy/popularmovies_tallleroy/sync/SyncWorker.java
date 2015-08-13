@@ -7,8 +7,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -24,13 +22,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Vector;
 
@@ -40,7 +35,7 @@ import java.util.Vector;
 public class SyncWorker {
     public static final String LOG_TAG = ".sync." + SyncWorker.class.getSimpleName();
     static final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/discover/movie?";
-    static final String API_KEY = "api_key";
+    public static final String API_KEY = "api_key";
     static final String SORT_BY = "sort_by";
     static final String POPULARITY = "popularity.desc";
 
@@ -72,14 +67,9 @@ public class SyncWorker {
         Log.i(LOG_TAG, "Starting sync");
 
 //        // for debug, load the data anytime
-        cleanDatabase(context);
+//        cleanDatabase(context);
 
         String sortValue = POPULARITY;
-//        String sortValueId = SORT_ORDER_POPULARITY;
-//        if (Utility.getPreferredSortOrder(context).equals("@string/pref_value_sort_order_rating")) {
-//            sortValue = RATING;
-//            sortValueId = SORT_ORDER_RATING;
-//        }
 
         if (!isSyncRequired(context)) {
             Log.i(LOG_TAG, "Sync not needed, we have the current " + sortValue + " data");
@@ -107,6 +97,7 @@ public class SyncWorker {
             Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                     .appendQueryParameter(SORT_BY, sortValue)
                     .appendQueryParameter(API_KEY, apiKey)
+                    .appendQueryParameter("append_to_response", "trailers,runtime")
                     .build();
 
             URL url = new URL(builtUri.toString());
@@ -175,13 +166,6 @@ public class SyncWorker {
             for(int i=0; i < results.length(); i++) {
                 MovieSummary ms = new MovieSummary(results.getJSONObject(i));
                 if (ms.isValid()) {
-                    // cache the bitmaps for this movie
-//                    Bitmap bm = getBitmap(ms.getPosterUrl());
-//                    if (bm == null) {
-//                        Log.i(LOG_TAG, "failed to load poster bitmap " + ms.getPosterUrlString());
-//                    } else {
-//                        ms.setPoster_bitmap(bm);
-//                    }
                     cVVector.add(ms.asContentValues());
                 }
             }
@@ -203,44 +187,4 @@ public class SyncWorker {
         }
     }
 
-    private static Bitmap getBitmap(URL url) {
-        HttpURLConnection urlConnection = null;
-        Bitmap bitmap = null;
-        try {
-            // Create the request to themoviedb, and open the connection
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
-
-            // Read the input stream into a String
-            InputStream inputStream = urlConnection.getInputStream();
-
-            bitmap = BitmapFactory.decodeStream(inputStream);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (ProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-        }
-
-        return bitmap;
-    }
-
-    private static byte[] getCompressedBitmapBytes(URL url) {
-        byte[] compressed = null;
-
-        Bitmap bm = getBitmap(url);
-        if (bm != null) {
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            if (bm.compress(Bitmap.CompressFormat.PNG,0,stream)){
-                compressed = stream.toByteArray();
-            }
-        }
-        return compressed;
-    }
 }

@@ -75,6 +75,7 @@ public class PostersContract {
         public static final String COLUMN_ORIGINAL_TITLE = "original_title";
         public static final String COLUMN_OVERVIEW = "overview";
         public static final String COLUMN_RELEASE_DATE = "release_date";
+        public static final String COLUMN_RUNTIME = "runtime";
         public static final String COLUMN_POSTER_PATH = "poster_path";
         public static final String COLUMN_POPULARITY = "popularity";
         public static final String COLUMN_TITLE = "title";

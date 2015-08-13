@@ -13,7 +13,7 @@
     <EditTextPreference
         android:key="@string/pref_api_key_text"
         android:title="@string/pref_moviedb_api_key"
-        android:summary="@string/pref_summary_moviedb_api_key"
+        android:summary=""
         android:singleLine="true"
         android:maxLines="1" />
 

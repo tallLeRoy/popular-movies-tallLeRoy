@@ -17,4 +17,10 @@
     <!-- SyncAdapter related -->
     <string name="sync_account_type">popularmovies_tallleroy.example.com</string>
     <string name="content_authority">com.example.leroy.popularmovies_tallleroy</string>
+    <string name="MovieDetail">MovieDetail</string>
+    <string name="mainActivityActionBar">Pop Movies</string>
+    <string name="movieSummaryExtra">movieSummary</string>
+    <string name="gather_api_key_instructions">You will need to register and obtain an API key from the moviedb.org. For registration use https://www.themoviedb.org/account/signup. Once registered, log into your account at https://www.themoviedb.org. Select API on the left column. Then generate an API Key on that page. It may take a few days to receive your key via email. The keys are very long, so take care entering it. You may edit your API Key on the Settings menu.</string>
+    <string name="gather_api_key_dialog_title">Input themoviedb.org API Key</string>
+    <string name="MovieDetailTrailersHeading">Trailers:</string>
 </resources>

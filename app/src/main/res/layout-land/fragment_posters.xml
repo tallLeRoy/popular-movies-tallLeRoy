@@ -2,21 +2,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-     tools:context=".MainActivityFragment">
-
-    <!-- the ImageView with themoviedb.org logo will be hidden by the grid -->
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/logo"
-        android:layout_centerVertical="true"
-        android:src="@drawable/var80tmdblogo2bree"
-        />
-
+    tools:context=".MainActivityFragment">
     <GridView
         android:id="@+id/gridview"
-        android:layout_alignParentTop="true"
-        android:numColumns="2"
+        android:numColumns="4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:verticalSpacing="0dp"

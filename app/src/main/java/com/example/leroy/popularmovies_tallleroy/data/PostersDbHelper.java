@@ -27,7 +27,7 @@ import com.example.leroy.popularmovies_tallleroy.data.PostersContract.PostersEnt
 public class PostersDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 11;
 
     static final String DATABASE_NAME = "posters.db";
 
@@ -48,15 +48,14 @@ public class PostersDbHelper extends SQLiteOpenHelper {
                 PostersEntry.COLUMN_ORIGINAL_LANGUAGE + " TEXT, " +
                 PostersEntry.COLUMN_ORIGINAL_TITLE + " TEXT, " +
                 PostersEntry.COLUMN_OVERVIEW + " TEXT, " +
-                PostersEntry.COLUMN_RELEASE_DATE + " TEXT, " +
-                PostersEntry.COLUMN_POSTER_PATH + " TEXT, " +
                 PostersEntry.COLUMN_POPULARITY + " REAL, " +
+                PostersEntry.COLUMN_POSTER_PATH + " TEXT, " +
+                PostersEntry.COLUMN_RELEASE_DATE + " TEXT, " +
+                PostersEntry.COLUMN_RUNTIME + " TEXT, " +
                 PostersEntry.COLUMN_TITLE + " TEXT, " +
                 PostersEntry.COLUMN_VIDEO + " TEXT, " +
                 PostersEntry.COLUMN_VOTE_AVERAGE + " REAL, " +
                 PostersEntry.COLUMN_VOTE_COUNT + " INTEGER, " +
-                PostersEntry.COLUMN_BACKDROP_BITMAP + " BLOB, " +
-                PostersEntry.COLUMN_POSTER_BITMAP + " BLOB, " +
                 PostersEntry.COLUMN_INSERT_DATE + " DATE DEFAULT CURRENT_DATE " +
                 " );";
 

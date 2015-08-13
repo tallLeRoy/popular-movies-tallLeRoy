@@ -1,0 +1,116 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/movie_detail"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    tools:context=".MovieDetailFragment" >
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/detail_movie_title_textview"
+            android:background="@color/accent_material_light"
+            android:autoText="false"
+            android:textSize="@dimen/abc_text_size_display_1_material"
+            android:text="Chappie"
+            android:paddingTop="@dimen/abc_text_size_headline_material"
+            android:paddingBottom="@dimen/abc_text_size_headline_material"
+            android:paddingLeft="@dimen/abc_text_size_body_1_material"
+            android:paddingRight="@dimen/abc_text_size_body_1_material"
+            android:textColor="@color/abc_primary_text_material_dark" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/abc_text_size_body_1_material"
+            android:paddingRight="@dimen/abc_text_size_body_1_material"
+            android:layout_gravity="center_horizontal">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/detail_poster_imageview" />
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/abc_text_size_body_1_material"
+                android:paddingRight="@dimen/abc_text_size_body_1_material"
+                android:layout_gravity="left">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="Large Text"
+                    android:id="@+id/detail_release_year_textview"
+                    android:layout_gravity="left"
+                    android:textColor="@color/abc_primary_text_material_light" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="Medium Text"
+                    android:id="@+id/detail_movie_runtime_textview"
+                    android:layout_gravity="left"
+                    android:textColor="@color/abc_primary_text_material_light"
+                    android:textStyle="italic" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Small Text"
+                    android:id="@+id/detail_movie_rating_textview"
+                    android:layout_gravity="left"
+                    android:textColor="@color/abc_primary_text_material_light"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/abc_text_size_body_1_material"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Description"
+            android:id="@+id/detail_overview_textview"
+            android:layout_gravity="center_horizontal" />
+
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:background="@android:color/black"
+            android:layout_marginLeft="@dimen/abc_text_size_body_1_material"
+            android:layout_marginRight="@dimen/abc_text_size_body_1_material"
+        />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/MovieDetailTrailersHeading"
+            android:layout_marginLeft="@dimen/abc_text_size_body_1_material"
+            android:layout_marginTop="@dimen/abc_text_size_body_1_material"
+            android:layout_marginBottom="@dimen/abc_text_size_body_1_material"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium" />
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/trailers_list_view"
+            >
+
+        </ListView>
+    </LinearLayout>
+
+</ScrollView>

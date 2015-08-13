@@ -1,5 +1,6 @@
 package com.example.leroy.popularmovies_tallleroy;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -16,11 +17,33 @@ import java.util.List;
 public class SupplyBitmaps extends AsyncTask<List<MovieSummary>, Integer, List<MovieSummary>> {
     protected AsyncSupplyBitmapResponse response;
     protected static LruCache<String, Bitmap> s_memoryCache = null;
-    protected static DiskLruCache s_diskCache = null;
-    protected static Object s_cacheLock = new Object();
+    protected static final Object s_cacheLock = new Object();
+    protected static Context context = null;
+    private static final int DISK_CACHE_SIZE = 1024 * 1024 * 100; // 100MB
+    private static final String DISK_CACHE_SUBDIR = "posters";
 
-    public SupplyBitmaps(AsyncSupplyBitmapResponse response) {
+    public SupplyBitmaps(AsyncSupplyBitmapResponse response, Context context) {
         this.response = response;
+        this.context = context;
+    }
+
+    public static Bitmap getLocalBitmap(String key) {
+        Bitmap bitmap = null;
+        synchronized (s_cacheLock) {
+            // try the memory cache first
+            LruCache<String, Bitmap> memoryCache = getMemoryCache(null);
+            if (memoryCache != null) {
+                bitmap = memoryCache.get(key);
+            }
+            if (bitmap == null) {
+                bitmap = Utility.getBitmapFromFile(key, context);
+                if (bitmap != null) {
+                    memoryCache = getMemoryCache(bitmap);
+                    memoryCache.put(key, bitmap);
+                }
+            }
+        }
+        return bitmap;
     }
 
     @Override
@@ -29,18 +52,37 @@ public class SupplyBitmaps extends AsyncTask<List<MovieSummary>, Integer, List<M
         for(MovieSummary movieSummary : movieSummaries) {
             if (movieSummary.getPosterBitmap() == null) {
                 synchronized (s_cacheLock) {
-                    String key = movieSummary.getPosterUrlString();
+                    String key = movieSummary.getPosterKey();
                     Bitmap bitmap = null;
+                    // try the memory cache first
                     LruCache<String, Bitmap> memoryCache = getMemoryCache(null);
                     if (memoryCache != null) {
                         bitmap = memoryCache.get(key);
                     }
                     if (bitmap == null) {
+                        bitmap = Utility.getBitmapFromFile(key, context);
+                        if (bitmap != null) {
+                            // put the image into our memory cache
+                            memoryCache = getMemoryCache(bitmap);
+                            memoryCache.put(key, bitmap);
+                        }
+                    }
+                    // finally go on out to themoviedb and update the memory and disk cache
+                    if (bitmap == null) {
                         URL posterUrl = movieSummary.getPosterUrl();
                         bitmap = getBitmap(posterUrl, key);
+                        if (bitmap != null) {
+                            // put the image into our memory cache
+                            memoryCache = getMemoryCache(bitmap);
+                            memoryCache.put(key, bitmap);
+                            // and put it in the local file system
+                            Utility.saveBitmapToFile(key, bitmap, context);
+                        }
                     }
-                    movieSummary.setPoster_bitmap(bitmap);
-                }
+                    movieSummary.setHasLocalPosterBitmap(true);
+                    // free up the memory
+                    bitmap = null;
+               }
             }
         }
         return movieSummaries;
@@ -77,16 +119,16 @@ public class SupplyBitmaps extends AsyncTask<List<MovieSummary>, Integer, List<M
             }
         }
 
-        getMemoryCache(bitmap).put(key, bitmap);
         return bitmap;
     }
 
-    protected static LruCache<String, Bitmap> getMemoryCache(Bitmap bitmap) {
+    public static LruCache<String, Bitmap> getMemoryCache(Bitmap bitmap) {
         if (bitmap == null) {
             return s_memoryCache;
         }
         if (s_memoryCache == null) {
             int allocateSize = bitmap.getByteCount() * 22;
+            // this size will be about 80 meg for the largest posters
             s_memoryCache = new LruCache<String,Bitmap>(allocateSize) {
                 @Override
                 protected int sizeOf(String key, Bitmap bitmap) {
