@@ -24,11 +24,10 @@ import java.util.List;
 public class PostersFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     PostersAdapter mPostersAdapter;
-    // need static here for the OnSharedPreferencesChanged callback
-    static Activity activity;
-    static Resources res;
-    static int gridPosition = GridView.INVALID_POSITION;
-    GridView gridView = null;
+    static Activity mOurActivity;
+    static Resources mOurResources;
+    static int mGridPosition = GridView.INVALID_POSITION;
+    GridView mGridView = null;
 
     public PostersFragment() {
     }
@@ -38,8 +37,8 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         if (savedInstanceState == null) {
-            activity = getActivity();
-            res = activity.getResources();
+            mOurActivity = getActivity();
+            mOurResources = mOurActivity.getResources();
         }
     }
 
@@ -58,14 +57,14 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
         mPostersAdapter.setCallback(getActivity());
         mPostersAdapter.setMainView(mainView);
 
-        gridView = (GridView) mainView.findViewById(R.id.gridview);
+        mGridView = (GridView) mainView.findViewById(R.id.gridview);
 
-        gridView.setAdapter(mPostersAdapter);
+        mGridView.setAdapter(mPostersAdapter);
         if (savedInstanceState != null && savedInstanceState.containsKey("grid_position")) {
-            gridPosition = savedInstanceState.getInt("grid_position");
+            mGridPosition = savedInstanceState.getInt("grid_position");
         }
-        if (gridPosition != GridView.INVALID_POSITION) {
-            gridView.setSelection(gridPosition);
+        if (mGridPosition != GridView.INVALID_POSITION) {
+            mGridView.setSelection(mGridPosition);
         }
 
         return mainView;
@@ -74,25 +73,25 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
     @Override
     public void onResume() {
         super.onResume();
-        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
+        PreferenceManager.getDefaultSharedPreferences(MainActivity.getContext()).registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
+        PreferenceManager.getDefaultSharedPreferences(MainActivity.getContext()).registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        String prefSortOrder = res.getString(R.string.pref_sort_order_list);
-        String prefAPIKey = res.getString(R.string.pref_api_key_text);
-        String prefNewData = res.getString(R.string.pref_new_data_loaded);
+        String prefSortOrder = mOurResources.getString(R.string.pref_sort_order_list);
+        String prefAPIKey = mOurResources.getString(R.string.pref_api_key_text);
+        String prefNewData = mOurResources.getString(R.string.pref_new_data_loaded);
 
         if (key.equals(prefSortOrder)) {
             mPostersAdapter.changeSortOrder();
         }
-        if (key.equals(prefNewData)) {
+        if (key.startsWith(prefNewData)) {
             String value = sharedPreferences.getString(key, null);
             if (value != null) {
                 // remove the new data flag
@@ -104,14 +103,14 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
             }
         }
         if (key.equals(prefAPIKey)) {
-            SyncWorker.cleanDatabase(activity);
-            SyncAdapter.syncImmediately(activity);
+            SyncWorker.cleanDatabase(mOurActivity);
+            SyncAdapter.syncImmediately(mOurActivity);
         }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        gridPosition = gridView.getFirstVisiblePosition();
+        mGridPosition = mGridView.getFirstVisiblePosition();
         super.onSaveInstanceState(outState);
     }
 

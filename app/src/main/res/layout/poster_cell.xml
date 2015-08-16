@@ -9,4 +9,16 @@
         android:id="@+id/posterimg"
         android:adjustViewBounds="true"
     />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/poster_favorite_star"
+        android:src="@android:drawable/btn_star_big_on"
+        android:layout_gravity="top|right"
+        android:layout_margin="@dimen/abc_switch_padding"
+        android:contentDescription="Favorite"
+        android:visibility="gone"
+    />
+
 </FrameLayout>

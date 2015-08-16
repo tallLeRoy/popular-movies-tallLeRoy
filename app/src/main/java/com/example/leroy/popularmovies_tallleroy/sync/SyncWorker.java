@@ -27,6 +27,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -146,10 +149,10 @@ public class SyncWorker {
             }
         }
 
-        // tell the sharedpred listeners about the new data
+        // tell the sharedpref listeners about the new data
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
-        String newDataLoaded = context.getResources().getString(R.string.pref_new_data_loaded);
+        String newDataLoaded = context.getResources().getString(R.string.pref_new_data_loaded) + new Random();
         editor.putString(newDataLoaded, "true");
         editor.commit();
 
@@ -163,10 +166,13 @@ public class SyncWorker {
             JSONArray results = jsonWhole.getJSONArray("results");
             Vector<ContentValues> cVVector = new Vector<ContentValues>(results.length());
 
+            List<String> movie_ids = new ArrayList<String>(results.length());
+
             for(int i=0; i < results.length(); i++) {
                 MovieSummary ms = new MovieSummary(results.getJSONObject(i));
                 if (ms.isValid()) {
                     cVVector.add(ms.asContentValues());
+                    movie_ids.add(ms.getMovieId());
                 }
             }
 
@@ -175,9 +181,12 @@ public class SyncWorker {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];
                 cVVector.toArray(cvArray);
 
-                // delete the current set of posters for this mSortOrder
-                context.getContentResolver().delete(PostersContract.PostersEntry.CONTENT_URI,
-                        null, null );
+                // delete the set of posters not in our latest list
+                String selection = "movie_id NOT IN ( ? )";
+                String args = movie_ids.toString().replace(", ", "', '").replace("[", "'").replace("]", "'");
+                context.getContentResolver().delete(PostersContract.PostersEntry.CONTENT_URI, selection, new String[]{args});
+                context.getContentResolver().delete(PostersContract.TrailersEntry.CONTENT_URI, selection, new String[]{args});
+                context.getContentResolver().delete(PostersContract.ReviewsEntry.CONTENT_URI, selection, new String[]{args});
                 // insert the new posters table
                 context.getContentResolver().bulkInsert(PostersContract.PostersEntry.CONTENT_URI, cvArray);
             }

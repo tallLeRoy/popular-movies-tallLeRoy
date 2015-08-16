@@ -22,12 +22,13 @@ import java.util.List;
 */
 public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncSupplyBitmapResponse {
     private static final String LOG_TAG = PostersAdapter.class.getSimpleName();
+    String sortRating;
+    String sortFavorite;
 
     List<MovieSummary> movieList;
     Context context;
     PostersAdapter.Callback callback;
     String currentSortOrder;
-    ImageView posterImageView;
     View mainView;
 
     public void setMainView(View mainView) {
@@ -46,6 +47,8 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
         super(context, 0, movieList);
         this.context = context;
         this.movieList = movieList;
+        sortRating = context.getResources().getString(R.string.pref_value_sort_order_rating);
+        sortFavorite = context.getResources().getString(R.string.pref_value_sort_order_favorite);
         updateMovieList();
     }
 
@@ -58,7 +61,7 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
        }
         MovieSummary ms = movieList.get(position);
         // set the view with the poster and give the title to the content description
-        posterImageView = (ImageView) gridCell.findViewById(R.id.posterimg);
+        ImageView posterImageView = (ImageView) gridCell.findViewById(R.id.posterimg);
         posterImageView.setContentDescription(ms.getTitle());
         posterImageView.setImageBitmap(ms.getPosterBitmap());
         posterImageView.setTag(ms);
@@ -70,6 +73,21 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
                 callback.onItemSelected(ms);
             }
         });
+        ImageView starView = (ImageView) gridCell.findViewById(R.id.poster_favorite_star);
+        if(ms.isFavorite()) {
+            starView.setVisibility(View.VISIBLE);
+            starView.setTag(ms);
+            starView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ImageView starView = (ImageView) v;
+                    MovieSummary ms = (MovieSummary) starView.getTag();
+                    callback.onItemSelected(ms);
+                }
+            });
+        } else {
+            starView.setVisibility(View.INVISIBLE);
+        }
 
         return gridCell;
     }
@@ -78,14 +96,8 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
     public void updateMovieList() {
         List<MovieSummary> newList = new ArrayList<MovieSummary>(20);
 
-        String sortRating = context.getResources().getString(R.string.pref_value_sort_order_rating);
+        // always pull movies in popularity order
         String sortOrder = PostersContract.PostersEntry.POSTERS_QUERY_SORT_ORDER_POPULARITY;
-        currentSortOrder = Utility.getPreferredSortOrder(context);
-        if (currentSortOrder.equals(sortRating)) {
-            sortOrder = PostersContract.PostersEntry.POSTERS_QUERY_SORT_ORDER_RATING;
-        }
-
-
         Cursor cursor = context.getContentResolver().query(PostersContract.PostersEntry.CONTENT_URI, null, null, null, sortOrder);
 
         if (cursor.getCount() > 0) {
@@ -97,6 +109,8 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
         cursor.close();
 
         if (newList.size() > 0) {
+            // now fix the sort order for display
+            setSortOrder();
             // load the bitmaps locally
             SupplyBitmaps supplyBitmaps = new SupplyBitmaps(this, context);
             supplyBitmaps.execute(newList);
@@ -107,40 +121,68 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
     // if the user just wants to change the sort order, use the same movieList,
     // but sort it based on popularity or ratings
     public void changeSortOrder() {
-        String sortRating = context.getResources().getString(R.string.pref_value_sort_order_rating);
         String newSortOrder = Utility.getPreferredSortOrder(context);
         if (!newSortOrder.equals(currentSortOrder)) {
-            currentSortOrder = newSortOrder;
-            if (currentSortOrder.equals(sortRating)) {
-                // a rating sort
-                Collections.sort(movieList, new Comparator<MovieSummary>() {
-                    @Override
-                    public int compare(MovieSummary lhs, MovieSummary rhs) {
-                        Double d1 = Double.parseDouble(lhs.getVote_average());
-                        Double d2 = Double.parseDouble(rhs.getVote_average());
-                        return d2.compareTo(d1);
-                    }
-                });
-            } else {
-                // a popularity sort
-                Collections.sort(movieList, new Comparator<MovieSummary>() {
-                    @Override
-                    public int compare(MovieSummary lhs, MovieSummary rhs) {
-                        Double d1 = Double.parseDouble(lhs.getPopularity());
-                        Double d2 = Double.parseDouble(rhs.getPopularity());
-                        return d2.compareTo(d1);
-                    }
-                });
-            }
+            setSortOrder();
             // have the view redrawn
             notifyDataSetChanged();
         }
+    }
+
+    private void setSortOrder() {
+        String newSortOrder = Utility.getPreferredSortOrder(context);
+        currentSortOrder = newSortOrder;
+        if (currentSortOrder.equals(sortRating)) {
+            // a rating sort
+            Collections.sort(movieList, new Comparator<MovieSummary>() {
+                @Override
+                public int compare(MovieSummary lhs, MovieSummary rhs) {
+                    Double d1 = Double.parseDouble(lhs.getVote_average());
+                    Double d2 = Double.parseDouble(rhs.getVote_average());
+                    return d2.compareTo(d1);
+                }
+            });
+        } else if (currentSortOrder.equals(sortFavorite)) {
+            // favorite sort is based on favorite and popularity
+            Collections.sort(movieList, new Comparator<MovieSummary>() {
+                @Override
+                public int compare(MovieSummary lhs, MovieSummary rhs) {
+                    Double d1 = Double.parseDouble(lhs.getPopularity()) + (lhs.isFavorite() ? 1000d : 0d);
+                    Double d2 = Double.parseDouble(rhs.getPopularity()) + (rhs.isFavorite() ? 1000d : 0d);
+                    return d2.compareTo(d1);
+                }
+            });
+        } else {
+            // a popularity sort
+            Collections.sort(movieList, new Comparator<MovieSummary>() {
+                @Override
+                public int compare(MovieSummary lhs, MovieSummary rhs) {
+                    Double d1 = Double.parseDouble(lhs.getPopularity());
+                    Double d2 = Double.parseDouble(rhs.getPopularity());
+                    return d2.compareTo(d1);
+                }
+            });
+        }
+    }
+
+    public void refreshFavorites() {
+        if (currentSortOrder.equals(sortFavorite)) {
+            // we need to refresh the adapter
+            List<MovieSummary> clone = new ArrayList<MovieSummary>(movieList.size());
+            clone.addAll(movieList);
+            clear();
+            addAll(clone);
+            setSortOrder();
+            notifyDataSetChanged();
+        }
+
     }
 
     @Override
     public void bitmapsAvailable(List<MovieSummary> movieSummaries) {
         clear();
         addAll(movieSummaries);
+        setSortOrder();
         notifyDataSetChanged();
         // hide themoviedb logo
         if(mainView != null) {

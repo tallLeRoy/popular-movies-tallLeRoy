@@ -6,12 +6,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
 /**
- * An activity representing a single Movie detail screen. This
- * activity is only used on handset devices. On tablet-size devices,
+ * An mOurActivity representing a single Movie detail screen. This
+ * mOurActivity is only used on handset devices. On tablet-size devices,
  * item details are presented side-by-side with a list of items
  * in a {@link MainActivity}.
  * <p/>
- * This activity is mostly just a 'shell' activity containing nothing
+ * This mOurActivity is mostly just a 'shell' mOurActivity containing nothing
  * more than a {@link MovieDetailFragment}.
  */
 public class MovieDetailActivity extends AppCompatActivity {
@@ -25,7 +25,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // savedInstanceState is non-null when there is fragment state
-        // saved from previous configurations of this activity
+        // saved from previous configurations of this mOurActivity
         // (e.g. when rotating the screen from portrait to landscape).
         // In this case, the fragment will automatically be re-added
         // to its container so we don't need to manually add it.
@@ -34,7 +34,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         // http://developer.android.com/guide/components/fragments.html
         //
         if (savedInstanceState == null) {
-            // Create the detail fragment and add it to the activity
+            // Create the detail fragment and add it to the mOurActivity
             // using a fragment transaction.
             Bundle arguments = new Bundle();
             arguments.putParcelable(getString(R.string.movieSummaryExtra),
@@ -52,7 +52,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         int id = item.getItemId();
         if (id == android.R.id.home) {
             // This ID represents the Home or Up button. In the case of this
-            // activity, the Up button is shown. For
+            // mOurActivity, the Up button is shown. For
             // more details, see the Navigation pattern on Android Design:
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back

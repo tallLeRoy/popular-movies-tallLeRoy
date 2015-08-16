@@ -18,6 +18,7 @@ package com.example.leroy.popularmovies_tallleroy.data;
 import android.annotation.TargetApi;
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,7 +32,10 @@ public class PostersProvider extends ContentProvider {
 
     static final int POSTERS = 100;
     static final int POSTER_BY_MOVIE_ID = 101;
-
+    static final int TRAILERS = 102;
+    static final int TRAILERS_BY_MOVIE_ID = 103;
+    static final int REVIEWS = 104;
+    static final int REVIEWS_BY_MOVIE_ID = 105;
 
     static UriMatcher buildUriMatcher() {
          // All paths added to the UriMatcher have a corresponding code to return when a match is
@@ -43,6 +47,10 @@ public class PostersProvider extends ContentProvider {
         // For each type of URI you want to add, create a corresponding code.
         matcher.addURI(authority, PostersContract.PATH_POSTERS, POSTERS);
         matcher.addURI(authority, PostersContract.PATH_POSTERS + "/*", POSTER_BY_MOVIE_ID);
+        matcher.addURI(authority, PostersContract.PATH_TRAILERS, TRAILERS);
+        matcher.addURI(authority, PostersContract.PATH_TRAILERS + "/*", TRAILERS_BY_MOVIE_ID);
+        matcher.addURI(authority, PostersContract.PATH_REVIEWS, REVIEWS);
+        matcher.addURI(authority, PostersContract.PATH_REVIEWS + "/*", REVIEWS_BY_MOVIE_ID);
 
         return matcher;
     }
@@ -61,6 +69,12 @@ public class PostersProvider extends ContentProvider {
 
         switch (match) {
             // Student: Uncomment and fill out these two cases
+            case TRAILERS:
+            case TRAILERS_BY_MOVIE_ID:
+                return PostersContract.TrailersEntry.CONTENT_TYPE;
+            case REVIEWS:
+            case REVIEWS_BY_MOVIE_ID:
+                return PostersContract.ReviewsEntry.CONTENT_TYPE;
             case POSTER_BY_MOVIE_ID:
                 return PostersContract.PostersEntry.CONTENT_ITEM_TYPE;
             case POSTERS:
@@ -77,6 +91,60 @@ public class PostersProvider extends ContentProvider {
         // and query the database accordingly.
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
+            // "trailers"
+            case TRAILERS: {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        PostersContract.TrailersEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+            // "trailers/*"
+            case TRAILERS_BY_MOVIE_ID:
+            {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        PostersContract.TrailersEntry.TABLE_NAME,
+                        projection,
+                        PostersContract.TrailersEntry.TRAILERS_BY_MOVIE_ID_SELECTION,
+                        new String[] { PostersContract.TrailersEntry.getMovieIdFromUri(uri) },
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+            // "reviews"
+            case REVIEWS: {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        PostersContract.ReviewsEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+            // "reviews/*"
+            case REVIEWS_BY_MOVIE_ID:
+            {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        PostersContract.ReviewsEntry.TABLE_NAME,
+                        projection,
+                        PostersContract.ReviewsEntry.REVIEWS_BY_MOVIE_ID_SELECTION,
+                        new String[] { PostersContract.ReviewsEntry.getMovieIdFromUri(uri) },
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
             // "posters/*"
             case POSTER_BY_MOVIE_ID:
             {
@@ -118,6 +186,22 @@ public class PostersProvider extends ContentProvider {
         Uri returnUri;
 
         switch (match) {
+            case TRAILERS: {
+                long _id = db.insert(PostersContract.TrailersEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = PostersContract.TrailersEntry.buildTrailersUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
+            case REVIEWS: {
+                long _id = db.insert(PostersContract.ReviewsEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = PostersContract.ReviewsEntry.buildReviewsUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
             case POSTERS: {
                 long _id = db.insert(PostersContract.PostersEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
@@ -142,11 +226,18 @@ public class PostersProvider extends ContentProvider {
         // this makes delete all rows return the number of rows deleted
         if ( null == selection ) selection = "1";
         switch (match) {
+            case TRAILERS:
+                rowsDeleted = db.delete(
+                        PostersContract.TrailersEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case REVIEWS:
+                rowsDeleted = db.delete(
+                        PostersContract.ReviewsEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             case POSTERS:
                 rowsDeleted = db.delete(
                         PostersContract.PostersEntry.TABLE_NAME, selection, selectionArgs);
                 break;
-
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -165,6 +256,14 @@ public class PostersProvider extends ContentProvider {
         int rowsUpdated;
 
         switch (match) {
+            case TRAILERS:
+                rowsUpdated = db.update(PostersContract.TrailersEntry.TABLE_NAME, values, selection,
+                        selectionArgs);
+                break;
+            case REVIEWS:
+                rowsUpdated = db.update(PostersContract.ReviewsEntry.TABLE_NAME, values, selection,
+                        selectionArgs);
+                break;
             case POSTERS:
                 rowsUpdated = db.update(PostersContract.PostersEntry.TABLE_NAME, values, selection,
                         selectionArgs);
@@ -182,10 +281,43 @@ public class PostersProvider extends ContentProvider {
     public int bulkInsert(Uri uri, ContentValues[] values) {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
+        int returnCount;
         switch (match) {
+            case TRAILERS:
+                db.beginTransaction();
+                returnCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        long _id = db.insert(PostersContract.TrailersEntry.TABLE_NAME, null, value);
+                        if (_id != -1) {
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            case REVIEWS:
+                db.beginTransaction();
+                returnCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        long _id = db.insert(PostersContract.ReviewsEntry.TABLE_NAME, null, value);
+                        if (_id != -1) {
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
             case POSTERS:
                 db.beginTransaction();
-                int returnCount = 0;
+                returnCount = 0;
                 try {
                     for (ContentValues value : values) {
                       long _id = db.insert(PostersContract.PostersEntry.TABLE_NAME, null, value);
@@ -209,5 +341,10 @@ public class PostersProvider extends ContentProvider {
     public void shutdown() {
         mOpenHelper.close();
         super.shutdown();
+    }
+
+    public static void wipeout(Context context) {
+        PostersDbHelper dbHelper = new PostersDbHelper(context);
+        dbHelper.onUpgrade(dbHelper.getWritableDatabase(), 0, 1);
     }
 }

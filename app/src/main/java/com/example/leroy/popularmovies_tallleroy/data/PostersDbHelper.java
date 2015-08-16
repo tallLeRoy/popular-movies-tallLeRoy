@@ -19,7 +19,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.example.leroy.popularmovies_tallleroy.data.PostersContract.PostersEntry;
+import com.example.leroy.popularmovies_tallleroy.data.PostersContract.*;
 
 /**
  * Manages a local database for themoviedb poster data.
@@ -27,7 +27,7 @@ import com.example.leroy.popularmovies_tallleroy.data.PostersContract.PostersEnt
 public class PostersDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 11;
+    private static final int DATABASE_VERSION = 13;
 
     static final String DATABASE_NAME = "posters.db";
 
@@ -40,10 +40,11 @@ public class PostersDbHelper extends SQLiteOpenHelper {
         // Create a table to hold locations.  A location consists of the string supplied in the
         // location setting, the city name, and the latitude and longitude
         final String SQL_CREATE_POSTERS_TABLE = "CREATE TABLE " + PostersContract.PostersEntry.TABLE_NAME + " (" +
-                PostersEntry._ID + " INTEGER PRIMARY KEY," +
+                PostersEntry._ID + " INTEGER PRIMARY KEY, " +
                 PostersEntry.COLUMN_MOVIE_ID + " TEXT UNIQUE NOT NULL, " +
                 PostersEntry.COLUMN_ADULT + " TEXT, " +
                 PostersEntry.COLUMN_BACKDROP_PATH + " TEXT, " +
+                PostersEntry.COLUMN_FAVORITE + " TEXT, " +
                 PostersEntry.COLUMN_GENRE_IDS + " TEXT, " +
                 PostersEntry.COLUMN_ORIGINAL_LANGUAGE + " TEXT, " +
                 PostersEntry.COLUMN_ORIGINAL_TITLE + " TEXT, " +
@@ -60,6 +61,33 @@ public class PostersDbHelper extends SQLiteOpenHelper {
                 " );";
 
         sqLiteDatabase.execSQL(SQL_CREATE_POSTERS_TABLE);
+
+        final String SQL_CREATE_TRAILERS_TABLE = "CREATE TABLE " + PostersContract.TrailersEntry.TABLE_NAME + " (" +
+                PostersContract.TrailersEntry._ID + " INTEGER PRIMARY KEY, " +
+                PostersContract.TrailersEntry.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
+                PostersContract.TrailersEntry.COLUMN_QUICKTIME + " INTEGER, " +
+                PostersContract.TrailersEntry.COLUMN_YOUTUBE + " INTEGER, " +
+                PostersContract.TrailersEntry.COLUMN_TITLE + " TEXT, " +
+                PostersContract.TrailersEntry.COLUMN_SIZE + " TEXT, " +
+                PostersContract.TrailersEntry.COLUMN_SOURCE + " TEXT UNIQUE NOT NULL, " +
+                PostersContract.TrailersEntry.COLUMN_TYPE + " TEXT " +
+                PostersContract.TrailersEntry.COLUMN_INSERT_DATE + " DATE DEFAULT CURRENT_DATE " +
+                " );";
+
+        sqLiteDatabase.execSQL(SQL_CREATE_TRAILERS_TABLE);
+
+
+        final String SQL_CREATE_REVIEWS_TABLE = "CREATE TABLE " + PostersContract.ReviewsEntry.TABLE_NAME + " (" +
+                PostersContract.ReviewsEntry._ID + " INTEGER PRIMARY KEY, " +
+                PostersContract.ReviewsEntry.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
+                PostersContract.ReviewsEntry.COLUMN_REVIEW_ID + " TEXT, " +
+                PostersContract.ReviewsEntry.COLUMN_AUTHOR + " TEXT, " +
+                PostersContract.ReviewsEntry.COLUMN_CONTENT + " TEXT, " +
+                PostersContract.ReviewsEntry.COLUMN_URL + " TEXT UNIQUE NOT NULL," +
+                PostersContract.ReviewsEntry.COLUMN_INSERT_DATE + " DATE DEFAULT CURRENT_DATE " +
+                " );";
+
+        sqLiteDatabase.execSQL(SQL_CREATE_REVIEWS_TABLE);
     }
 
     @Override
@@ -71,6 +99,9 @@ public class PostersDbHelper extends SQLiteOpenHelper {
         // If you want to update the schema without wiping data, commenting out the next 2 lines
         // should be your top priority before modifying this method.
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + PostersEntry.TABLE_NAME);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + PostersContract.TrailersEntry.TABLE_NAME);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + PostersContract.ReviewsEntry.TABLE_NAME);
         onCreate(sqLiteDatabase);
     }
+
 }

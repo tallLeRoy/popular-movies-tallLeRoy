@@ -1,6 +1,7 @@
 package com.example.leroy.popularmovies_tallleroy;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -19,36 +20,58 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity implements PostersAdapter.Callback {
-    public static final String RUN_IN_EMULATOR = "false";
-    public static final String CLEAN_LOCAL_FILES = "false";
+    public static final boolean RUN_IN_EMULATOR = false;
+    public static final boolean CLEAN_LOCAL_FILES = false;
 
-    static PostersFragment postersFragment;
+    private static PostersFragment mPostersFragment;
+
+    // all access to our application context without passing it
+    private static MainActivity instance;
+
+    public static MainActivity getInstance() {
+        return instance;
+    }
+    public static Context getContext() {
+        return getInstance().getApplicationContext();
+    }
+
+    private boolean mTwopane = false;
+
+    public MainActivity() {
+        instance = this;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        MovieSummary.setActivity(this);
+
+        MovieSummary.setActivity(getInstance());
         setContentView(R.layout.activity_main);
 
-        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
-        // start up the sync activity to retrieve our posters from themoviedb
-        if(savedInstanceState == null) {
-            checkForAPI_key();
-            SyncAdapter.initializeSyncAdapter(this);
+        if (findViewById(R.id.movie_detail_container) != null) {
+            mTwopane = true;
+       }
 
-            if (CLEAN_LOCAL_FILES.equals("true")) {
-                // for debug, remove any old bitmaps in the file system
-                new Utility.CleanupAllFiledBitmaps(this).execute(new ArrayList<MovieSummary>());
+        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
+
+        if(savedInstanceState == null) {
+            // prompt for the API key if this is the first time
+            checkForAPI_key();
+
+            // initialize the sync adapter
+            SyncAdapter.initializeSyncAdapter(getContext());
+
+            // for debug, remove any old bitmaps in the file system
+            if (CLEAN_LOCAL_FILES) {
+                new Utility.CleanupAllFiledBitmaps(getContext()).execute(new ArrayList<MovieSummary>());
             }
-            if (postersFragment == null) {
-                postersFragment = (PostersFragment) fragmentManager.findFragmentById(R.id.PostersFragment);
-            } else {
-//                fragmentManager.beginTransaction()
-//                        .replace(R.id.PostersFragment, postersFragment)
-//                        .commit();
+
+            if (mPostersFragment == null) {
+                mPostersFragment = (PostersFragment) fragmentManager.findFragmentById(R.id.PostersFragment);
             }
         }
-        SyncAdapter.syncImmediately(this);
+        // start up the sync mOurActivity to retrieve our posters from themoviedb
+        SyncAdapter.syncImmediately(getContext());
     }
 
     private void checkForAPI_key() {
@@ -66,8 +89,6 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
             final EditText userInput = (EditText) gatherAPIkeyView
                     .findViewById(R.id.gather_api_key_edittext);
 
-//            userInput.setText(apiKey);
-
             // set dialog message
             alertDialogBuilder
                     .setTitle(R.string.gather_api_key_dialog_title)
@@ -77,8 +98,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
                                 public void onClick(DialogInterface dialog,int id) {
                                     // get user input and set it to the API_key
                                     SharedPreferences.Editor editor = prefs.edit();
-//                                    editor.putString(getString(R.string.pref_api_key_text), userInput.getText().toString());
-                                    editor.putString(getString(R.string.pref_api_key_text), "35225ca1eec3918e9f32c1c2c1e279a9");
+                                    editor.putString(getString(R.string.pref_api_key_text), userInput.getText().toString());
                                     editor.commit();
                                 }
                             })
@@ -107,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        // as you specify a parent mOurActivity in AndroidManifest.xml.
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
@@ -121,10 +141,23 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
 
     @Override
     public void onItemSelected(MovieSummary movieSummary) {
-        // new item selected, start the detail activity
-        Intent detailIntent = new Intent(this, MovieDetailActivity.class);
-        detailIntent.putExtra(getString(R.string.movieSummaryExtra), movieSummary);
-        startActivity(detailIntent);
+        if (mTwopane) {
+            // In two-pane mode, show the detail view in this activity by
+            // adding or replacing the detail fragment using a
+            // fragment transaction.
+            Bundle arguments = new Bundle();
+            arguments.putParcelable(getString(R.string.movieSummaryExtra), movieSummary);
+            MovieDetailFragment fragment = new MovieDetailFragment();
+            fragment.setArguments(arguments);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.movie_detail_container, fragment)
+                    .commit();
+        } else {
+            // new item selected, start the detail mOurActivity
+            Intent detailIntent = new Intent(this, MovieDetailActivity.class);
+            detailIntent.putExtra(getString(R.string.movieSummaryExtra), movieSummary);
+            startActivity(detailIntent);
+        }
     }
 
 }
