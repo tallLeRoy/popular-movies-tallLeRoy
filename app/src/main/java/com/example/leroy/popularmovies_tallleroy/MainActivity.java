@@ -20,25 +20,25 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity implements PostersAdapter.Callback {
+    // helpers for debugging this app
     public static final boolean RUN_IN_EMULATOR = false;
     public static final boolean CLEAN_LOCAL_FILES = false;
 
     private static PostersFragment mPostersFragment;
+    private boolean mTwopane = false;
 
-    // all access to our application context without passing it
-    private static MainActivity instance;
+    // all access to our application mContext without passing it
+    private static MainActivity sInstance;
 
     public static MainActivity getInstance() {
-        return instance;
+        return sInstance;
     }
     public static Context getContext() {
         return getInstance().getApplicationContext();
     }
 
-    private boolean mTwopane = false;
-
     public MainActivity() {
-        instance = this;
+        sInstance = this;
     }
 
     @Override

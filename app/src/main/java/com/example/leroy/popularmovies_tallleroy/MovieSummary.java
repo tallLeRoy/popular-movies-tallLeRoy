@@ -1,6 +1,7 @@
 package com.example.leroy.popularmovies_tallleroy;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -52,13 +53,11 @@ public class MovieSummary implements Parcelable {
     public static final String LOG_TAG = MovieSummary.class.getSimpleName();
     public static String INVALID_ID = "-1";
     public static String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/";
-    private static Context s_context;
 
     public static void setActivity(Activity activity) {
         // run this once at the first time the class it used
         // determine the screen size and update the IMAGE_BASE_URL
         // to keep the onscreen size right
-        s_context = activity.getApplicationContext();
 
         if( IMAGE_BASE_URL.endsWith("/")) {
             DisplayMetrics dm = new DisplayMetrics();
@@ -187,7 +186,7 @@ public class MovieSummary implements Parcelable {
             // we are created from a SQL call, so fill up the details using a background task
             if (getRuntime() == null) {
                 // we need to get the details from themoviedb and put them in the content provider
-                new FillInMovieDetails(s_context).execute(this);
+                new FillInMovieDetails(MainActivity.getContext()).execute(this);
             } else {
                 // the trailers and reviews are already stocked in the content provider
                 queryTrailersAndReviews();
@@ -202,7 +201,7 @@ public class MovieSummary implements Parcelable {
     private void queryTrailersAndReviews() {
         // we believe that the content resolver has been updated with trailers and reviews if any
         String [] argMovieId = { getMovieId() };
-        Cursor cursor = s_context.getContentResolver().query(PostersContract.TrailersEntry.CONTENT_URI,null,"movie_id = ? ", argMovieId, null);
+        Cursor cursor = MainActivity.getContext().getContentResolver().query(PostersContract.TrailersEntry.CONTENT_URI,null,"movie_id = ? ", argMovieId, null);
         if (cursor.getCount() > 0) {
             List<Trailer> listTrailers = new ArrayList<Trailer>(cursor.getCount());
             while(cursor.moveToNext()) {
@@ -210,7 +209,9 @@ public class MovieSummary implements Parcelable {
             }
             trailers = listTrailers;
         }
-        cursor = s_context.getContentResolver().query(PostersContract.ReviewsEntry.CONTENT_URI,null,"movie_id = ? ", argMovieId, null);
+        cursor.close();
+
+        cursor = MainActivity.getContext().getContentResolver().query(PostersContract.ReviewsEntry.CONTENT_URI,null,"movie_id = ? ", argMovieId, null);
         if (cursor.getCount() > 0) {
             List<Review> listReviews = new ArrayList<Review>(cursor.getCount());
             while(cursor.moveToNext()) {
@@ -218,6 +219,7 @@ public class MovieSummary implements Parcelable {
             }
             reviews = listReviews;
         }
+        cursor.close();
     }
 
     public static final Creator<MovieSummary> CREATOR = new Creator<MovieSummary>() {
@@ -336,7 +338,7 @@ public class MovieSummary implements Parcelable {
         // now update our content provider
         ContentValues favoriteValue = new ContentValues(1);
         favoriteValue.put("favorite", favorite);
-        s_context.getContentResolver().update(PostersContract.PostersEntry.CONTENT_URI, favoriteValue, "movie_id = ? ", new String[]{movie_id});
+        MainActivity.getContext().getContentResolver().update(PostersContract.PostersEntry.CONTENT_URI, favoriteValue, "movie_id = ? ", new String[]{movie_id});
 
         // tell the posterfragment adapter that things have changed
         GridView gridView = (GridView)MainActivity.getInstance().findViewById(R.id.gridview);
@@ -564,6 +566,8 @@ public class MovieSummary implements Parcelable {
                 }
                 mMovieSummary.reviews = reviews;
 
+                ContentResolver resolver = MainActivity.getContext().getContentResolver();
+
                 // now update the content resolver
                 String movie_id = mMovieSummary.getMovieId();
                 if(trailers.size() > 0) {
@@ -574,7 +578,7 @@ public class MovieSummary implements Parcelable {
                     }
                     ContentValues [] arrayContentValues = new ContentValues[trailers.size()];
                     vectorContentValues.toArray(arrayContentValues);
-                    s_context.getContentResolver().bulkInsert(PostersContract.TrailersEntry.CONTENT_URI, arrayContentValues);
+                    resolver.bulkInsert(PostersContract.TrailersEntry.CONTENT_URI, arrayContentValues);
                 }
 
                 if (reviews.size() > 0) {
@@ -585,12 +589,12 @@ public class MovieSummary implements Parcelable {
                     }
                     ContentValues [] arrayContentValues = new ContentValues[reviews.size()];
                     vectorContentValues.toArray(arrayContentValues);
-                    s_context.getContentResolver().bulkInsert(PostersContract.ReviewsEntry.CONTENT_URI, arrayContentValues);
+                    resolver.bulkInsert(PostersContract.ReviewsEntry.CONTENT_URI, arrayContentValues);
                 }
 
                 ContentValues runtimeValue = new ContentValues(1);
                 runtimeValue.put("runtime", mMovieSummary.getRuntime());
-                s_context.getContentResolver().update(PostersContract.PostersEntry.CONTENT_URI, runtimeValue, "movie_id = ? ", new String[]{movie_id});
+                resolver.update(PostersContract.PostersEntry.CONTENT_URI, runtimeValue, "movie_id = ? ", new String[]{movie_id});
 
 
            } catch (JSONException e) {

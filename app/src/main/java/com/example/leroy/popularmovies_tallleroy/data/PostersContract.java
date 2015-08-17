@@ -44,15 +44,6 @@ public class PostersContract {
     public static final String PATH_TRAILERS = "trailers";
     public static final String PATH_REVIEWS = "reviews";
 
-//    // To make it easy to query for the exact date, we normalize all dates that go into
-//    // the database to the start of the the Julian day at UTC.
-//    public static long normalizeDate(long startDate) {
-//        // normalize the start date to the beginning of the (UTC) day
-//        Time time = new Time();
-//        time.set(startDate);
-//        int julianDay = Time.getJulianDay(startDate, time.gmtoff);
-//        return time.setJulianDay(julianDay);
-//    }
 
     /* Inner class that defines the table contents of the poster table */
     public static final class PostersEntry implements BaseColumns {
@@ -100,8 +91,6 @@ public class PostersContract {
                 PostersContract.PostersEntry.COLUMN_INSERT_DATE + " = CURRENT_DATE ";
         public static final String POSTERS_QUERY_SORT_ORDER_POPULARITY = PostersContract.PostersEntry.TABLE_NAME + "." +
                 PostersContract.PostersEntry.COLUMN_POPULARITY + " DESC ";
-        public static final String POSTERS_QUERY_SORT_ORDER_RATING = PostersContract.PostersEntry.TABLE_NAME + "." +
-                PostersContract.PostersEntry.COLUMN_VOTE_AVERAGE + " DESC ";
 
     }
 
@@ -112,8 +101,6 @@ public class PostersContract {
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_TRAILERS;
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_TRAILERS;
 
         // Table name
         public static final String TABLE_NAME = "trailers";
@@ -146,8 +133,6 @@ public class PostersContract {
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEWS;
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEWS;
 
         // Table name
         public static final String TABLE_NAME = "reviews";

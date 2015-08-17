@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.example.leroy.popularmovies_tallleroy.MainActivity;
 import com.example.leroy.popularmovies_tallleroy.MovieSummary;
 import com.example.leroy.popularmovies_tallleroy.R;
 import com.example.leroy.popularmovies_tallleroy.Utility;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -40,14 +42,17 @@ public class SyncWorker {
     static final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/discover/movie?";
     public static final String API_KEY = "api_key";
     static final String SORT_BY = "sort_by";
-    static final String POPULARITY = "popularity.desc";
+    static final String RELEASE_DATE_LTE = "primary_release_date.lte";
+    static final String VOTE_COUNT_GTE = "vote_count.gte";
+//    static final String POPULARITY = "popularity.desc";
+    static final String NEWEST_RELEASES = "primary_release_date.desc";
 
     static final String CURRENT_POSTERS = PostersContract.PostersEntry.CURRENT_POSTERS;
-    static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.POSTER_BY_MOVIE_ID_SELECTION;
+//    static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.POSTER_BY_MOVIE_ID_SELECTION;
 
     // return true if the database was not refreshed today, themoviedb is updated daily
     public static boolean isSyncRequired(Context context) {
-            boolean bSyncRequired = false;
+        boolean bSyncRequired = false;
 
         // are there records in the contentprovider for today with this sort order?
         Cursor cursor = context.getContentResolver().query(PostersContract.PostersEntry.CONTENT_URI, null, CURRENT_POSTERS, null, null);
@@ -61,23 +66,40 @@ public class SyncWorker {
         return bSyncRequired;
     }
 
+    public static List<String> getCurrentMovieIds() {
+        List<String> movieList = new ArrayList<String>(20);
+
+        Cursor cursor = MainActivity.getContext().getContentResolver().query(PostersContract.PostersEntry.CONTENT_URI, new String[]{"movie_id"}, null, null, null);
+
+        while(cursor.moveToNext()) {
+            movieList.add(cursor.getString(cursor.getColumnIndex("movie_id")));
+        }
+
+        return movieList;
+    }
+
     public static void cleanDatabase(Context context) {
         // wipe out the whole table
         context.getContentResolver().delete(PostersContract.PostersEntry.CONTENT_URI, null, null);
     }
 
     public static void performSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult, Context context) {
-        Log.i(LOG_TAG, "Starting sync");
+        Log.v(LOG_TAG, "Starting sync");
 
-//        // for debug, load the data anytime
-//        cleanDatabase(context);
+        if (MainActivity.CLEAN_LOCAL_FILES) {
+            // for debug, load the data anytime
+            cleanDatabase(context);
+        }
 
-        String sortValue = POPULARITY;
+//        String sortValue = POPULARITY;
+        String sortValue = NEWEST_RELEASES;
 
         if (!isSyncRequired(context)) {
-            Log.i(LOG_TAG, "Sync not needed, we have the current " + sortValue + " data");
+            Log.v(LOG_TAG, "Sync not needed, we have the current " + sortValue + " data");
             return;
         }
+
+
 
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
@@ -86,19 +108,19 @@ public class SyncWorker {
 
         String apiKey = Utility.getPreferredApiKey(context);
         if (( apiKey == null ) || apiKey.equals("")) {
-            Log.i(LOG_TAG, "Sync error, apiKey is null or empty");
+            Log.d(LOG_TAG, "Sync error, apiKey is null or empty");
             return;
         }
 
-//
-//        // Will contain the raw JSON response as a string.
-//
         try {
             // construct URL for themoviedb api, ask for either popularity or rating with the
             // highest first
 
             Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                     .appendQueryParameter(SORT_BY, sortValue)
+                    .appendQueryParameter(RELEASE_DATE_LTE,
+                            new SimpleDateFormat("yyyy.MM.dd").format(new java.util.Date()))
+                    .appendQueryParameter(VOTE_COUNT_GTE, "50")
                     .appendQueryParameter(API_KEY, apiKey)
                     .appendQueryParameter("append_to_response", "trailers,runtime")
                     .build();
@@ -131,7 +153,7 @@ public class SyncWorker {
                 // Stream was empty.  No point in parsing.
                 return;
             }
-//            Log.d(LOG_TAG, buffer.toString());
+//            Log.v(LOG_TAG, buffer.toString());
 
             processJSON(buffer.toString(), context);
         } catch (IOException e) {
@@ -156,7 +178,7 @@ public class SyncWorker {
         editor.putString(newDataLoaded, "true");
         editor.commit();
 
-        Log.i(LOG_TAG, "Ending Sync");
+        Log.v(LOG_TAG, "Ending Sync");
         return;
     }
 
@@ -166,13 +188,18 @@ public class SyncWorker {
             JSONArray results = jsonWhole.getJSONArray("results");
             Vector<ContentValues> cVVector = new Vector<ContentValues>(results.length());
 
-            List<String> movie_ids = new ArrayList<String>(results.length());
+            List<String> current_movie_ids = getCurrentMovieIds();
+            List<String> new_movie_ids = new ArrayList<String>(results.length());
 
             for(int i=0; i < results.length(); i++) {
                 MovieSummary ms = new MovieSummary(results.getJSONObject(i));
                 if (ms.isValid()) {
-                    cVVector.add(ms.asContentValues());
-                    movie_ids.add(ms.getMovieId());
+                    String movie_id = ms.getMovieId();
+                    new_movie_ids.add(movie_id);
+                    if (!current_movie_ids.contains(movie_id)) {
+                        // we don't need to reinsert into the content provider
+                        cVVector.add(ms.asContentValues());
+                    }
                 }
             }
 
@@ -183,10 +210,10 @@ public class SyncWorker {
 
                 // delete the set of posters not in our latest list
                 String selection = "movie_id NOT IN ( ? )";
-                String args = movie_ids.toString().replace(", ", "', '").replace("[", "'").replace("]", "'");
-                context.getContentResolver().delete(PostersContract.PostersEntry.CONTENT_URI, selection, new String[]{args});
-                context.getContentResolver().delete(PostersContract.TrailersEntry.CONTENT_URI, selection, new String[]{args});
-                context.getContentResolver().delete(PostersContract.ReviewsEntry.CONTENT_URI, selection, new String[]{args});
+                String[] args = new String[]{ new_movie_ids.toString().replace(", ", "', '").replace("[", "'").replace("]", "'") };
+                context.getContentResolver().delete(PostersContract.PostersEntry.CONTENT_URI, selection, args);
+                context.getContentResolver().delete(PostersContract.TrailersEntry.CONTENT_URI, selection, args);
+                context.getContentResolver().delete(PostersContract.ReviewsEntry.CONTENT_URI, selection, args);
                 // insert the new posters table
                 context.getContentResolver().bulkInsert(PostersContract.PostersEntry.CONTENT_URI, cvArray);
             }

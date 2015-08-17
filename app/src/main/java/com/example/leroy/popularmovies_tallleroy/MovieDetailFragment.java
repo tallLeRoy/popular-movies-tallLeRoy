@@ -26,13 +26,12 @@ import java.util.List;
  * on handsets.
  */
 public class MovieDetailFragment extends Fragment {
-    MovieSummary mMovieSummary = null;
-
     private static final String TRAILER_SHARE_HASHTAG = " #PopMoviesApp";
-    private static String mFirstTrailerURL = null;
 
-    private ShareActionProvider mShareActionProvider;
+    private static String sFirstTrailerURL = null;
 
+    ShareActionProvider mShareActionProvider;
+    MovieSummary mMovieSummary = null;
 
     TextView mTitleView;
     ImageView mPosterView;
@@ -80,7 +79,7 @@ public class MovieDetailFragment extends Fragment {
             List<MovieSummary.Trailer> list = mMovieSummary.getTrailers();
             if (list != null && list.size() > 0) {
                 MovieSummary.Trailer t = list.get(0);
-                mFirstTrailerURL = t.getURLString();
+                sFirstTrailerURL = t.getURLString();
                 mShareActionProvider.setShareIntent(createShareForecastIntent());
             }
         }
@@ -90,7 +89,7 @@ public class MovieDetailFragment extends Fragment {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, mFirstTrailerURL + TRAILER_SHARE_HASHTAG);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, sFirstTrailerURL + TRAILER_SHARE_HASHTAG);
         return shareIntent;
     }
 

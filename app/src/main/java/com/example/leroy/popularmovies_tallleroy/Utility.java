@@ -40,7 +40,7 @@ public class Utility {
         return MEMORY_CACHE_FILENAME_PREFIX;
     }
 
-     public static void saveBitmapToFile(String key, Bitmap bitmap, Context context) {
+    public static void saveBitmapToFile(String key, Bitmap bitmap, Context context) {
         String filename = getMemoryCacheFileName() + key;
         try {
             FileOutputStream os = context.openFileOutput(filename, context.MODE_PRIVATE);

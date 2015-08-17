@@ -28,9 +28,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-        Log.i(LOG_TAG, "Starting sync");
+        Log.v(LOG_TAG, "Starting sync");
         SyncWorker.performSync(account, extras, authority, provider, syncResult, getContext());
-        Log.i(LOG_TAG, "Ending sync");
+        Log.v(LOG_TAG, "Ending sync");
         return;
     }
 

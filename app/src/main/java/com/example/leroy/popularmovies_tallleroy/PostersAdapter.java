@@ -22,17 +22,17 @@ import java.util.List;
 */
 public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncSupplyBitmapResponse {
     private static final String LOG_TAG = PostersAdapter.class.getSimpleName();
-    String sortRating;
-    String sortFavorite;
+    String mSortRating;
+    String mSortFavorite;
 
-    List<MovieSummary> movieList;
-    Context context;
-    PostersAdapter.Callback callback;
-    String currentSortOrder;
-    View mainView;
+    List<MovieSummary> mMovieList;
+    Context mContext;
+    PostersAdapter.Callback mCallback;
+    String mCurrentSortOrder;
+    View mMainView;
 
-    public void setMainView(View mainView) {
-        this.mainView = mainView;
+    public void setmMainView(View mMainView) {
+        this.mMainView = mMainView;
     }
 
     public interface Callback {
@@ -40,26 +40,28 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
     }
 
     public void setCallback(Activity destination) {
-        callback = (PostersAdapter.Callback)destination;
+        mCallback = (PostersAdapter.Callback)destination;
     }
 
-    public PostersAdapter(Context context, List<MovieSummary> movieList) {
-        super(context, 0, movieList);
-        this.context = context;
-        this.movieList = movieList;
-        sortRating = context.getResources().getString(R.string.pref_value_sort_order_rating);
-        sortFavorite = context.getResources().getString(R.string.pref_value_sort_order_favorite);
-        updateMovieList();
+    public PostersAdapter(Context context, List<MovieSummary> movies) {
+        super(context, 0, movies);
+        this.mContext = context;
+        this.mMovieList = movies;
+        mSortRating = context.getResources().getString(R.string.pref_value_sort_order_rating);
+        mSortFavorite = context.getResources().getString(R.string.pref_value_sort_order_favorite);
+        if(!MainActivity.CLEAN_LOCAL_FILES) {
+            updateMovieList();
+        }
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View gridCell = convertView;
         if (gridCell == null) {
-            LayoutInflater inflater = (LayoutInflater.from(context));
+            LayoutInflater inflater = (LayoutInflater.from(mContext));
             gridCell = inflater.inflate(R.layout.poster_cell, null);
        }
-        MovieSummary ms = movieList.get(position);
+        MovieSummary ms = mMovieList.get(position);
         // set the view with the poster and give the title to the content description
         ImageView posterImageView = (ImageView) gridCell.findViewById(R.id.posterimg);
         posterImageView.setContentDescription(ms.getTitle());
@@ -70,7 +72,7 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
             public void onClick(View v) {
                 ImageView posterImageView = (ImageView) v;
                 MovieSummary ms = (MovieSummary) posterImageView.getTag();
-                callback.onItemSelected(ms);
+                mCallback.onItemSelected(ms);
             }
         });
         ImageView starView = (ImageView) gridCell.findViewById(R.id.poster_favorite_star);
@@ -82,7 +84,7 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
                 public void onClick(View v) {
                     ImageView starView = (ImageView) v;
                     MovieSummary ms = (MovieSummary) starView.getTag();
-                    callback.onItemSelected(ms);
+                    mCallback.onItemSelected(ms);
                 }
             });
         } else {
@@ -92,13 +94,13 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
         return gridCell;
     }
 
-    // grab the movieList from our content provider
+    // grab the mMovieList from our content provider
     public void updateMovieList() {
         List<MovieSummary> newList = new ArrayList<MovieSummary>(20);
 
         // always pull movies in popularity order
         String sortOrder = PostersContract.PostersEntry.POSTERS_QUERY_SORT_ORDER_POPULARITY;
-        Cursor cursor = context.getContentResolver().query(PostersContract.PostersEntry.CONTENT_URI, null, null, null, sortOrder);
+        Cursor cursor = mContext.getContentResolver().query(PostersContract.PostersEntry.CONTENT_URI, null, null, null, sortOrder);
 
         if (cursor.getCount() > 0) {
             while (cursor.moveToNext()) {
@@ -112,17 +114,17 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
             // now fix the sort order for display
             setSortOrder();
             // load the bitmaps locally
-            SupplyBitmaps supplyBitmaps = new SupplyBitmaps(this, context);
+            SupplyBitmaps supplyBitmaps = new SupplyBitmaps(this, mContext);
             supplyBitmaps.execute(newList);
         }
     }
 
 
-    // if the user just wants to change the sort order, use the same movieList,
+    // if the user just wants to change the sort order, use the same mMovieList,
     // but sort it based on popularity or ratings
     public void changeSortOrder() {
-        String newSortOrder = Utility.getPreferredSortOrder(context);
-        if (!newSortOrder.equals(currentSortOrder)) {
+        String newSortOrder = Utility.getPreferredSortOrder(mContext);
+        if (!newSortOrder.equals(mCurrentSortOrder)) {
             setSortOrder();
             // have the view redrawn
             notifyDataSetChanged();
@@ -130,11 +132,11 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
     }
 
     private void setSortOrder() {
-        String newSortOrder = Utility.getPreferredSortOrder(context);
-        currentSortOrder = newSortOrder;
-        if (currentSortOrder.equals(sortRating)) {
+        String newSortOrder = Utility.getPreferredSortOrder(mContext);
+        mCurrentSortOrder = newSortOrder;
+        if (mCurrentSortOrder.equals(mSortRating)) {
             // a rating sort
-            Collections.sort(movieList, new Comparator<MovieSummary>() {
+            Collections.sort(mMovieList, new Comparator<MovieSummary>() {
                 @Override
                 public int compare(MovieSummary lhs, MovieSummary rhs) {
                     Double d1 = Double.parseDouble(lhs.getVote_average());
@@ -142,9 +144,9 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
                     return d2.compareTo(d1);
                 }
             });
-        } else if (currentSortOrder.equals(sortFavorite)) {
+        } else if (mCurrentSortOrder.equals(mSortFavorite)) {
             // favorite sort is based on favorite and popularity
-            Collections.sort(movieList, new Comparator<MovieSummary>() {
+            Collections.sort(mMovieList, new Comparator<MovieSummary>() {
                 @Override
                 public int compare(MovieSummary lhs, MovieSummary rhs) {
                     Double d1 = Double.parseDouble(lhs.getPopularity()) + (lhs.isFavorite() ? 1000d : 0d);
@@ -154,7 +156,7 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
             });
         } else {
             // a popularity sort
-            Collections.sort(movieList, new Comparator<MovieSummary>() {
+            Collections.sort(mMovieList, new Comparator<MovieSummary>() {
                 @Override
                 public int compare(MovieSummary lhs, MovieSummary rhs) {
                     Double d1 = Double.parseDouble(lhs.getPopularity());
@@ -166,10 +168,10 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
     }
 
     public void refreshFavorites() {
-        if (currentSortOrder.equals(sortFavorite)) {
+        if (mCurrentSortOrder.equals(mSortFavorite)) {
             // we need to refresh the adapter
-            List<MovieSummary> clone = new ArrayList<MovieSummary>(movieList.size());
-            clone.addAll(movieList);
+            List<MovieSummary> clone = new ArrayList<MovieSummary>(mMovieList.size());
+            clone.addAll(mMovieList);
             clear();
             addAll(clone);
             setSortOrder();
@@ -185,10 +187,10 @@ public class PostersAdapter extends ArrayAdapter<MovieSummary> implements AsyncS
         setSortOrder();
         notifyDataSetChanged();
         // hide themoviedb logo
-        if(mainView != null) {
-            mainView.findViewById(R.id.logo).setVisibility(View.INVISIBLE);
+        if(mMainView != null) {
+            mMainView.findViewById(R.id.logo).setVisibility(View.INVISIBLE);
         }
         // delete any unused bitmap files in the file system
-        new Utility.CleanupFiledBitmaps(context).execute(movieSummaries);
+        new Utility.CleanupFiledBitmaps(mContext).execute(movieSummaries);
     }
 }

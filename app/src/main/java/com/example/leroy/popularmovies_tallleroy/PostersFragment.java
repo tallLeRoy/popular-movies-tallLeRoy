@@ -55,7 +55,7 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
         }
         mPostersAdapter = new PostersAdapter(getActivity(),  movieSummaries);
         mPostersAdapter.setCallback(getActivity());
-        mPostersAdapter.setMainView(mainView);
+        mPostersAdapter.setmMainView(mainView);
 
         mGridView = (GridView) mainView.findViewById(R.id.gridview);
 
