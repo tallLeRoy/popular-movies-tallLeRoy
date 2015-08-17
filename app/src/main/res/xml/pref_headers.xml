@@ -6,12 +6,5 @@
         android:fragment="com.example.leroy.popularmovies_tallleroy.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/pref_header_general" />
 
-    <header
-        android:fragment="com.example.leroy.popularmovies_tallleroy.SettingsActivity$NotificationPreferenceFragment"
-        android:title="@string/pref_header_notifications" />
-
-    <header
-        android:fragment="com.example.leroy.popularmovies_tallleroy.SettingsActivity$DataSyncPreferenceFragment"
-        android:title="@string/pref_header_data_sync" />
 
 </preference-headers>

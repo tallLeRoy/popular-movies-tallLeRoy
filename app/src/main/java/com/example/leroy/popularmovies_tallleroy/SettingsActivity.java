@@ -2,6 +2,7 @@ package com.example.leroy.popularmovies_tallleroy;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,7 +34,6 @@ public class SettingsActivity extends PreferenceActivity {
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
 
-
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -57,25 +57,8 @@ public class SettingsActivity extends PreferenceActivity {
         // Add 'general' preferences.
         addPreferencesFromResource(R.xml.pref_general);
 
-        // Add 'notifications' preferences, and a corresponding header.
-     //   PreferenceCategory fakeHeader = new PreferenceCategory(this);
-     //   fakeHeader.setTitle(R.string.pref_header_notifications);
-     //   getPreferenceScreen().addPreference(fakeHeader);
-     //   addPreferencesFromResource(R.xml.pref_notification);
-
-        // Add 'data and sync' preferences, and a corresponding header.
-     //   fakeHeader = new PreferenceCategory(this);
-     //   fakeHeader.setTitle(R.string.pref_header_data_sync);
-     //   getPreferenceScreen().addPreference(fakeHeader);
-     //   addPreferencesFromResource(R.xml.pref_data_sync);
-
-        // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
-        // their values. When their values change, their summaries are updated
-        // to reflect the new value, per the Android Design guidelines.
         bindPreferenceSummaryToValue(findPreference("api_key_text"));
         bindPreferenceSummaryToValue(findPreference("sort_order_list"));
-     //   bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
-     //   bindPreferenceSummaryToValue(findPreference("sync_frequency"));
     }
 
     /**
@@ -139,29 +122,6 @@ public class SettingsActivity extends PreferenceActivity {
                         index >= 0
                                 ? listPreference.getEntries()[index]
                                 : null);
-
-//            } else if (preference instanceof RingtonePreference) {
-//                // For ringtone preferences, look up the correct display value
-//                // using RingtoneManager.
-//                if (TextUtils.isEmpty(stringValue)) {
-//                    // Empty values correspond to 'silent' (no ringtone).
-//                    preference.setSummary(R.string.pref_ringtone_silent);
-//
-//                } else {
-//                    Ringtone ringtone = RingtoneManager.getRingtone(
-//                            preference.getContext(), Uri.parse(stringValue));
-//
-//                    if (ringtone == null) {
-//                        // Clear the summary if there was a lookup error.
-//                        preference.setSummary(null);
-//                    } else {
-//                        // Set the summary to reflect the new ringtone display
-//                        // name.
-//                        String name = ringtone.getTitle(preference.getContext());
-//                        preference.setSummary(name);
-//                    }
-//                }
-
             } else {
                 // For all other preferences, set the summary to the value's
                 // simple string representation.
@@ -192,9 +152,15 @@ public class SettingsActivity extends PreferenceActivity {
                         .getString(preference.getKey(), ""));
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @Override
+    public Intent getParentActivityIntent() {
+        return super.getParentActivityIntent().addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    }
+
     /**
      * This fragment shows general preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
+     * mOurActivity is showing a two-pane settings UI.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class GeneralPreferenceFragment extends PreferenceFragment {
@@ -212,41 +178,8 @@ public class SettingsActivity extends PreferenceActivity {
         }
     }
 
-    /**
-     * This fragment shows notification preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
-     */
-//    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-//    public static class NotificationPreferenceFragment extends PreferenceFragment {
-//        @Override
-//        public void onCreate(Bundle savedInstanceState) {
-//            super.onCreate(savedInstanceState);
-//            addPreferencesFromResource(R.xml.pref_notification);
-//
-//            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-//            // to their values. When their values change, their summaries are
-//            // updated to reflect the new value, per the Android Design
-//            // guidelines.
-//            bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
-//        }
-//    }
-
-    /**
-     * This fragment shows data and sync preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
-     */
-//    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-//    public static class DataSyncPreferenceFragment extends PreferenceFragment {
-//        @Override
-//        public void onCreate(Bundle savedInstanceState) {
-//            super.onCreate(savedInstanceState);
-//            addPreferencesFromResource(R.xml.pref_data_sync);
-//
-//            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-//            // to their values. When their values change, their summaries are
-//            // updated to reflect the new value, per the Android Design
-//            // guidelines.
-//            bindPreferenceSummaryToValue(findPreference("sync_frequency"));
-//        }
-//    }
+    @Override
+    protected boolean isValidFragment(String fragmentName) {
+        return true;
+    }
 }

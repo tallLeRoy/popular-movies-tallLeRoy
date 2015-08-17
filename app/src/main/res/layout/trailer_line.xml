@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight">
+
+    <ImageView
+        android:id="@+id/youtube_icon"
+        android:layout_height="match_parent"
+        android:contentDescription="View the trailer on YouTube"
+        android:src="@drawable/youtubeiconfullcolor"
+        android:layout_width="?android:attr/listPreferredItemHeight"
+        android:maxWidth="?android:attr/listPreferredItemHeight"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="@dimen/abc_text_size_body_1_material"
+        android:layout_marginRight="@dimen/abc_text_size_body_1_material"
+        />
+
+    <TextView
+        android:id="@+id/trailer_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/abc_text_size_body_1_material"
+        android:layout_marginRight="@dimen/abc_text_size_body_1_material"
+        android:layout_gravity="center_vertical"
+        android:layout_toEndOf="@id/youtube_icon"
+        android:layout_toRightOf="@id/youtube_icon"
+        android:layout_centerVertical="true"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Body1" />
+
+    <View
+        android:layout_width="wrap_content"
+        android:layout_height="1dp"
+        android:background="@android:color/black"
+        android:layout_marginLeft="@dimen/abc_text_size_body_1_material"
+        android:layout_marginRight="@dimen/abc_text_size_body_1_material"
+        android:layout_alignBottom="@id/youtube_icon"
+        android:id="@+id/underline" />
+
+
+</RelativeLayout>
