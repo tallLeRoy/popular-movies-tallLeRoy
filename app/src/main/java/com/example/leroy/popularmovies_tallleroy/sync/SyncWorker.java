@@ -28,7 +28,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -44,8 +43,8 @@ public class SyncWorker {
     static final String SORT_BY = "sort_by";
     static final String RELEASE_DATE_LTE = "primary_release_date.lte";
     static final String VOTE_COUNT_GTE = "vote_count.gte";
-//    static final String POPULARITY = "popularity.desc";
-    static final String NEWEST_RELEASES = "primary_release_date.desc";
+    static final String POPULARITY = "popularity.desc";
+//    static final String NEWEST_RELEASES = "primary_release_date.desc";
 
     static final String CURRENT_POSTERS = PostersContract.PostersEntry.CURRENT_POSTERS;
 //    static final String POSTER_BY_MOVIE_ID_SELECTION = PostersContract.PostersEntry.POSTER_BY_MOVIE_ID_SELECTION;
@@ -91,8 +90,8 @@ public class SyncWorker {
             cleanDatabase(context);
         }
 
-//        String sortValue = POPULARITY;
-        String sortValue = NEWEST_RELEASES;
+        String sortValue = POPULARITY;
+//        String sortValue = NEWEST_RELEASES;
 
         if (!isSyncRequired(context)) {
             Log.v(LOG_TAG, "Sync not needed, we have the current " + sortValue + " data");
@@ -118,11 +117,9 @@ public class SyncWorker {
 
             Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                     .appendQueryParameter(SORT_BY, sortValue)
-                    .appendQueryParameter(RELEASE_DATE_LTE,
-                            new SimpleDateFormat("yyyy.MM.dd").format(new java.util.Date()))
-                    .appendQueryParameter(VOTE_COUNT_GTE, "50")
+//                    .appendQueryParameter(RELEASE_DATE_LTE, new SimpleDateFormat("yyyy.MM.dd").format(new java.util.Date()))
+//                    .appendQueryParameter(VOTE_COUNT_GTE, "50")
                     .appendQueryParameter(API_KEY, apiKey)
-                    .appendQueryParameter("append_to_response", "trailers,runtime")
                     .build();
 
             URL url = new URL(builtUri.toString());
