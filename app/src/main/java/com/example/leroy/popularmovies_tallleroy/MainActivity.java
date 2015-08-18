@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -24,8 +26,9 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
     public static final boolean RUN_IN_EMULATOR = false;
     public static final boolean CLEAN_LOCAL_FILES = false;
 
-    private static PostersFragment mPostersFragment;
+    private static PostersFragment sPostersFragment;
     private boolean mTwopane = false;
+    private MovieSummary mSelectedMovieSummary = null;
 
     // all access to our application mContext without passing it
     private static MainActivity sInstance;
@@ -55,8 +58,6 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
         android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
 
         if(savedInstanceState == null) {
-            // prompt for the API key if this is the first time
-            checkForAPI_key();
 
             // initialize the sync adapter
             SyncAdapter.initializeSyncAdapter(getContext());
@@ -66,12 +67,50 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
                 new Utility.CleanupAllFiledBitmaps(getContext()).execute(new ArrayList<MovieSummary>());
             }
 
-            if (mPostersFragment == null) {
-                mPostersFragment = (PostersFragment) fragmentManager.findFragmentById(R.id.PostersFragment);
+            if (sPostersFragment == null) {
+                sPostersFragment = (PostersFragment) fragmentManager.findFragmentById(R.id.PostersFragment);
+                if (checkForNetworkConnection()) {
+                    // prompt for the API key if this is the first time
+                    checkForAPI_key();
+                }
             }
         }
         // start up the sync mOurActivity to retrieve our posters from themoviedb
         SyncAdapter.syncImmediately(getContext());
+
+    }
+
+    private boolean checkForNetworkConnection() {
+        boolean bConnected = isNetworkAvailable();
+        if (!bConnected) {
+            AlertDialog.Builder alert = new AlertDialog.Builder(this);
+            alert.setTitle("Continue without Network Connection?");
+            alert.setMessage("Pop Movies requires Internet access to pull movie information from themoviedb.org. Choose Continue to " +
+                    "review the movie information that we pulled the last time you used the program. " +
+                    "If this is your first time using the program you should reply Cancel. ");
+            alert.setCancelable(true);
+            alert.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                }
+            });
+            alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                    finish();
+                }
+            });
+            alert.setIcon(android.R.drawable.ic_dialog_alert);
+            AlertDialog dialog = alert.create();
+            dialog.show();
+        }
+        return bConnected;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     private void checkForAPI_key() {
@@ -140,8 +179,28 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.Ca
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if (outState != null) {
+            if (mSelectedMovieSummary != null) {
+                outState.putParcelable("selectedMovieSummary", mSelectedMovieSummary);
+            }
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        if (savedInstanceState != null && savedInstanceState.containsKey("selectedMovieSummary")) {
+            MovieSummary movieSummary = (MovieSummary) savedInstanceState.getParcelable("selectedMovieSummary");
+            onItemSelected(movieSummary);
+        }
+    }
+
+    @Override
     public void onItemSelected(MovieSummary movieSummary) {
         if (mTwopane) {
+            mSelectedMovieSummary = movieSummary;
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.

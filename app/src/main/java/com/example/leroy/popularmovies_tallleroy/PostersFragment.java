@@ -60,12 +60,6 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
         mGridView = (GridView) mainView.findViewById(R.id.gridview);
 
         mGridView.setAdapter(mPostersAdapter);
-        if (savedInstanceState != null && savedInstanceState.containsKey("grid_position")) {
-            mGridPosition = savedInstanceState.getInt("grid_position");
-        }
-        if (mGridPosition != GridView.INVALID_POSITION) {
-            mGridView.setSelection(mGridPosition);
-        }
 
         return mainView;
     }
@@ -109,8 +103,21 @@ public class PostersFragment extends Fragment implements SharedPreferences.OnSha
     }
 
     @Override
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        if (savedInstanceState != null && savedInstanceState.containsKey("grid_position")) {
+            mGridPosition = savedInstanceState.getInt("grid_position");
+        }
+        if (mGridView != null && mGridPosition != GridView.INVALID_POSITION) {
+            mGridView.setSelection(mGridPosition);
+        }
+        super.onViewStateRestored(savedInstanceState);
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
-        mGridPosition = mGridView.getFirstVisiblePosition();
+        if (mGridView != null) {
+            mGridPosition = mGridView.getFirstVisiblePosition();
+        }
         super.onSaveInstanceState(outState);
     }
 
